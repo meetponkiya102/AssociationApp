@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trader Registration - Market Association Fee Tracking</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./css/styles.css">
+  <script src="./js/mock-data.js"></script>
+</head>
+
+<body class="bg-slate-50 text-slate-900 min-h-screen flex items-center justify-center p-4 py-8 antialiased font-sans">
+
+  <!-- Main Card (Header & Footer removed) -->
+  <div class="w-full max-w-xl bg-white border border-slate-200 rounded-lg p-6 sm:p-8 shadow-sm">
+
+    <!-- Branding & Title -->
+    <div class="text-center mb-6">
+      <div
+        class="w-12 h-12 mx-auto rounded-lg bg-[#1D4ED8] text-white font-bold text-lg flex items-center justify-center mb-3 shadow-sm">
+        AP
+      </div>
+      <h1 class="text-xl font-bold text-slate-900">Trading Firm Registration</h1>
+      <p class="text-sm text-slate-500 mt-1">Register your trading firm to verify inbound bills and receive receipts</p>
+    </div>
+
+    <!-- Registration Form View -->
+    <div id="trader-form-container">
+      <form id="trader-reg-form" onsubmit="handleTraderRegistration(event)" class="space-y-4">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="reg-trd-name">Authorized Person /
+              Director <span class="text-rose-600">*</span></label>
+            <input type="text" id="reg-trd-name" required placeholder="e.g. Arvindbhai V. Patel"
+              class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-md focus:border-blue-600 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="reg-trd-firm">Trading Firm / Business
+              Name <span class="text-rose-600">*</span></label>
+            <input type="text" id="reg-trd-firm" required placeholder="e.g. Jay Somnath Grains Pvt Ltd"
+              class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-md focus:border-blue-600 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="reg-trd-mobile">10-Digit Mobile
+              (WhatsApp) <span class="text-rose-600">*</span></label>
+            <input type="tel" id="reg-trd-mobile" pattern="[0-9]{10}" required placeholder="9898112244"
+              class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-md font-mono focus:border-blue-600 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="reg-trd-email">Accounts Email Address
+              <span class="text-rose-600">*</span></label>
+            <input type="email" id="reg-trd-email" required placeholder="accounts@somnathgrains.com"
+              class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-md focus:border-blue-600 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="reg-trd-gst">GSTIN Number <span
+                class="text-rose-600">*</span></label>
+            <input type="text" id="reg-trd-gst" pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}"
+              required placeholder="24AABCS1234F1Z9"
+              class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-md font-mono uppercase focus:border-blue-600 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="reg-trd-password">Password <span
+                class="text-rose-600">*</span></label>
+            <div class="relative">
+              <input type="password" id="reg-trd-password" minlength="6" required placeholder="Minimum 6 characters"
+                class="w-full pl-3.5 pr-11 py-2.5 text-sm border border-slate-300 rounded-md focus:border-blue-600 focus:outline-none">
+              <button type="button" onclick="toggleTrdRegPassword()"
+                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-700 focus:outline-none"
+                title="Show or hide password">
+                <svg id="trd-reg-eye-show" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg id="trd-reg-eye-hide" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="reg-trd-address">Registered Business
+            Address <span class="text-rose-600">*</span></label>
+          <textarea id="reg-trd-address" rows="2" required placeholder="Plot 88, Food & Grain Processing Zone, GIDC"
+            class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-md focus:border-blue-600 focus:outline-none"></textarea>
+        </div>
+
+        <div class="pt-4 flex items-center justify-center space-x-3">
+          <button type="submit"
+            class="py-2.5 px-6 bg-[#1D4ED8] hover:bg-[#1E40AF] text-white font-semibold text-sm rounded-md transition-colors shadow-sm">
+            Submit Trader Application
+          </button>
+          <a href="./login.html"
+            class="py-2.5 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm rounded-md transition-colors shadow-sm text-center inline-flex items-center justify-center">
+            Cancel
+          </a>
+        </div>
+
+      </form>
+
+      <!-- Bottom Navigation Links -->
+      <div class="mt-6 pt-5 border-t border-slate-200 text-sm text-center space-y-2">
+        <div class="text-slate-500">Already registered?</div>
+        <div>
+          <a href="./login.html" class="text-blue-700 font-medium hover:underline">Sign In to your account</a>
+        </div>
+        <div>
+          <a href="./index.html" class="inline-block text-xs text-slate-500 hover:text-slate-800 mt-2">&larr; Back to
+            Portal Index</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending Verification Screen -->
+    <div id="pending-trd-screen" class="hidden py-4 text-left">
+      <div class="border-b border-slate-200 pb-4 mb-4 flex items-center justify-between">
+        <span class="status-badge badge-pending">Pending Review</span>
+        <span class="text-sm text-slate-500 font-mono">Ref: TRD-PENDING</span>
+      </div>
+
+      <h2 class="text-xl font-bold text-slate-900">Application Submitted</h2>
+      <p class="text-sm text-slate-600 mt-1 leading-relaxed">
+        Your Trader application for <strong id="submitted-trd-firm">Your Firm</strong> has been received and queued for
+        committee review.
+      </p>
+
+      <div class="bg-slate-50 border border-slate-200 rounded-md p-4 my-5 text-sm space-y-2 font-mono">
+        <div class="flex justify-between border-b border-slate-200 pb-1.5">
+          <span class="text-slate-500">Applicant ID:</span>
+          <span id="submitted-trd-id" class="font-bold text-slate-900">TRD-NEW</span>
+        </div>
+        <div class="flex justify-between border-b border-slate-200 pb-1.5">
+          <span class="text-slate-500">GSTIN:</span>
+          <span id="submitted-trd-gst" class="text-slate-900">24AABCS...</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">Notice Status:</span>
+          <span class="text-emerald-700 font-bold">Confirmation sent on WhatsApp</span>
+        </div>
+      </div>
+
+      <div class="space-y-2 pt-2 border-t border-slate-200">
+        <button onclick="jumpToAssociationApproval()"
+          class="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-md mr-3">
+          Open Association Office to Review &rarr;
+        </button>
+        <a href="./login.html"
+          class="py-2.5 px-4 border border-slate-300 text-slate-700 text-sm font-semibold rounded-md inline-block hover:bg-slate-50">
+          Back to Login
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="./js/layout.js"></script>
+  <script>
+    function toggleTrdRegPassword() {
+      const pwd = document.getElementById("reg-trd-password");
+      const eyeShow = document.getElementById("trd-reg-eye-show");
+      const eyeHide = document.getElementById("trd-reg-eye-hide");
+      if (pwd.type === "password") {
+        pwd.type = "text";
+        eyeShow.classList.add("hidden");
+        eyeHide.classList.remove("hidden");
+      } else {
+        pwd.type = "password";
+        eyeShow.classList.remove("hidden");
+        eyeHide.classList.add("hidden");
+      }
+    }
+
+    function handleTraderRegistration(e) {
+      e.preventDefault();
+      const name = document.getElementById("reg-trd-name").value.trim();
+      const firm = document.getElementById("reg-trd-firm").value.trim();
+      const mobile = document.getElementById("reg-trd-mobile").value.trim();
+      const email = document.getElementById("reg-trd-email").value.trim();
+      const gst = document.getElementById("reg-trd-gst").value.trim().toUpperCase();
+      const address = document.getElementById("reg-trd-address").value.trim();
+
+      const newId = `TRD-${AppState.getTraders().length + 201}`;
+
+      const newTrader = {
+        id: newId,
+        name,
+        firmName: firm,
+        mobile,
+        email,
+        gstNo: gst,
+        address,
+        status: "Pending",
+        registeredOn: AppState.getTodayDate()
+      };
+
+      AppState.getTraders().push(newTrader);
+      AppState.save();
+
+      document.getElementById("submitted-trd-firm").textContent = firm;
+      document.getElementById("submitted-trd-id").textContent = newId;
+      document.getElementById("submitted-trd-gst").textContent = gst;
+
+      document.getElementById("trader-form-container").classList.add("hidden");
+      document.getElementById("pending-trd-screen").classList.remove("hidden");
+
+      showToast(`Registration submitted for ${firm}. Application pending approval.`, "info");
+    }
+
+    function jumpToAssociationApproval() {
+      AppState.setCurrentRole("association");
+      window.location.href = "./association/approvals.html";
+    }
+  </script>
+</body>
+
+</html>

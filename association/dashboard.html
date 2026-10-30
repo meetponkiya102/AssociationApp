@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Association Dashboard - Fee Tracking System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/mock-data.js"></script>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 antialiased font-sans">
+
+  <div id="app-layout">
+    <div class="space-y-6">
+      
+      <!-- Top Title & Filter Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Association Operations Dashboard</h1>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="flex items-center space-x-2 self-start sm:self-auto text-sm">
+          <label for="filter-month" class="text-slate-600 font-semibold">Period:</label>
+          <select id="filter-month" onchange="renderDashboard()" class="px-3 py-1.5 text-sm border border-slate-300 rounded-md font-semibold bg-white text-slate-800 focus:outline-none">
+            <option value="2026-10" selected>October 2026 (Active)</option>
+            <option value="2026-09">September 2026 (Locked)</option>
+            <option value="all">All Available Records</option>
+          </select>
+
+          <button onclick="renderDashboard()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md text-slate-700 font-medium">
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Required Block -->
+      <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+            <span class="text-xs font-bold text-slate-900 uppercase tracking-wide">Tasks Requiring Action</span>
+          </div>
+          <span class="text-xs text-slate-500">Staff Queue</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <a href="./bills.html?status=Mismatch" class="p-3 bg-slate-50 hover:bg-red-50/50 border border-slate-200 hover:border-red-300 rounded-md flex items-center justify-between group transition-colors">
+            <div>
+              <span id="action-mismatch-count" class="font-bold text-red-600 block text-lg tabular-nums">0 Bills</span>
+              <span class="text-slate-600 text-xs font-medium">Bag count mismatch disputes</span>
+            </div>
+            <span class="text-xs text-slate-500 group-hover:text-red-700 font-semibold">Resolve &rarr;</span>
+          </a>
+
+          <a href="./approvals.html" class="p-3 bg-slate-50 hover:bg-amber-50/50 border border-slate-200 hover:border-amber-300 rounded-md flex items-center justify-between group transition-colors">
+            <div>
+              <span id="action-pending-count" class="font-bold text-amber-700 block text-lg tabular-nums">0 Registrations</span>
+              <span class="text-slate-600 text-xs font-medium">Waiting for verification</span>
+            </div>
+            <span class="text-xs text-slate-500 group-hover:text-amber-800 font-semibold">Review &rarr;</span>
+          </a>
+
+          <a href="./monthly-processing.html" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md flex items-center justify-between group transition-colors">
+            <div>
+              <span id="action-period-status" class="font-bold text-slate-900 block text-lg">October 2026</span>
+              <span class="text-slate-600 text-xs font-medium">Period lock available after 5th</span>
+            </div>
+            <span class="text-xs text-slate-500 group-hover:text-slate-900 font-semibold">Process &rarr;</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Uneven Hierarchy KPI Row -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <!-- Primary KPI: Outstanding Fee -->
+        <div class="bg-white border border-slate-200 rounded-lg p-5 md:col-span-2 border-l-4 border-l-[#1D4ED8] flex flex-col justify-between shadow-sm">
+          <div>
+            <div class="text-xs uppercase font-bold text-slate-500 tracking-wider">Total Outstanding Mandi Cess</div>
+            <div id="kpi-fee-outstanding" class="text-3xl font-extrabold text-slate-900 tabular-nums mt-1">₹0.00</div>
+            <p class="text-xs text-slate-500 mt-1">Unsettled fees due from registered traders</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="text-slate-600 font-medium">Trader Rate: ₹2.00 / bag</span>
+            <a href="./payments.html?filter=unpaid" class="text-[#1D4ED8] font-bold hover:underline">View Dues Register &rarr;</a>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <span class="text-xs uppercase font-bold text-slate-500 tracking-wider block">Volume Traded</span>
+            <div id="kpi-total-bags" class="text-2xl font-bold text-slate-900 tabular-nums mt-1">0</div>
+            <span class="text-xs text-slate-500">Reconciled bag total</span>
+          </div>
+          <div class="border-t border-slate-100 pt-2.5 mt-3 text-xs text-slate-600">
+            Calculated Fee: <strong id="kpi-total-fee" class="font-mono text-slate-900 tabular-nums">₹0.00</strong>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <span class="text-xs uppercase font-bold text-slate-500 tracking-wider block">Cess Collected</span>
+            <div id="kpi-fee-collected" class="text-2xl font-bold text-emerald-700 tabular-nums mt-1">₹0.00</div>
+            <span class="text-xs text-slate-500">Bank, UPI & Cash receipts</span>
+          </div>
+          <div class="border-t border-slate-100 pt-2.5 mt-3 text-xs text-slate-600">
+            <a href="./payments.html" class="text-[#1D4ED8] hover:underline font-semibold">View Payments &rarr;</a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div id="chart-bags-container"></div>
+        <div id="chart-fee-container"></div>
+      </div>
+
+      <!-- Tabs Section: Trader-wise vs Agent-wise Table -->
+      <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        
+        <!-- Tab Bar & Table Actions -->
+        <div class="p-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-50/70">
+          
+          <div class="flex space-x-2">
+            <button id="tab-trader-btn" onclick="switchTab('trader')" class="px-4 py-1.5 text-sm font-bold rounded-md bg-white text-slate-900 border border-slate-300 shadow-sm">
+              Trader-wise Summary
+            </button>
+            <button id="tab-agent-btn" onclick="switchTab('agent')" class="px-4 py-1.5 text-sm font-semibold rounded-md text-slate-600 hover:text-slate-900 border border-transparent">
+              Agent-wise Summary
+            </button>
+          </div>
+
+          <!-- Inline Search & Filter -->
+          <div class="flex items-center space-x-2 text-sm">
+            <input type="text" id="table-search" oninput="renderActiveTabTable()" placeholder="Search firm name..." class="px-3 py-1.5 text-sm border border-slate-300 rounded-md w-48 focus:outline-none">
+            
+            <select id="table-sort" onchange="renderActiveTabTable()" class="px-3 py-1.5 text-sm border border-slate-300 rounded-md bg-white text-slate-700 focus:outline-none">
+              <option value="outstanding-desc">Sort: Highest Due</option>
+              <option value="bags-desc">Sort: Highest Bags</option>
+              <option value="name-asc">Sort: Name (A-Z)</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-responsive">
+          <table class="erp-table">
+            <thead>
+              <tr id="table-head-row">
+                <!-- Swapped dynamically -->
+              </tr>
+            </thead>
+            <tbody id="summary-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="table-footer-info" class="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center font-mono">
+          <!-- Foot count -->
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/layout.js"></script>
+  <script>
+    let activeTab = "trader";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderDashboard();
+    });
+
+    function getFilteredBills() {
+      const month = document.getElementById("filter-month").value;
+      const allBills = AppState.getBills();
+      if (month === "all") return allBills;
+      return allBills.filter(b => b.month === month);
+    }
+
+    function renderDashboard() {
+      const filteredBills = getFilteredBills();
+      const month = document.getElementById("filter-month").value;
+      
+      let totalBags = 0;
+      let openMismatches = 0;
+      
+      filteredBills.forEach(b => {
+        const bags = b.finalBags || b.agentBags || b.traderBags || 0;
+        totalBags += bags;
+        if (b.status === "Mismatch") openMismatches++;
+      });
+
+      const totalFee = filteredBills.reduce((acc, b) => {
+        const count = b.finalBags || b.traderBags || b.agentBags || 0;
+        return acc + (count * (b.ratePerBag || 2.0));
+      }, 0);
+
+      const allPayments = AppState.getPayments();
+      const filteredPayments = month === "all" ? allPayments : allPayments.filter(p => p.month === month);
+      const totalCollected = filteredPayments.reduce((acc, p) => acc + p.amountPaid, 0);
+      const totalOutstanding = Math.max(0, totalFee - totalCollected);
+
+      const pendingApprovals = AppState.getAgents().filter(a => a.status === "Pending").length +
+                               AppState.getTraders().filter(t => t.status === "Pending").length;
+
+      // Update KPIs
+      document.getElementById("kpi-total-bags").textContent = AppState.formatNumber(totalBags);
+      document.getElementById("kpi-total-fee").textContent = AppState.formatCurrency(totalFee);
+      document.getElementById("kpi-fee-collected").textContent = AppState.formatCurrency(totalCollected);
+      document.getElementById("kpi-fee-outstanding").textContent = AppState.formatCurrency(totalOutstanding);
+
+      // Action required
+      document.getElementById("action-mismatch-count").textContent = `${openMismatches} Discrepancies`;
+      document.getElementById("action-pending-count").textContent = `${pendingApprovals} Applications`;
+
+      // Render Charts
+      renderSimpleBarChart("chart-bags-container", [
+        { label: "01", value: 300 },
+        { label: "05", value: 580 },
+        { label: "10", value: 420 },
+        { label: "15", value: 710 },
+        { label: "20", value: 640 },
+        { label: "25", value: 890 },
+        { label: "30", value: 1120 }
+      ], `Daily Bags Traded (${month === "2026-09" ? "Sept 2026" : "Oct 2026"})`);
+
+      renderSimpleTrendLine("chart-fee-container", "Monthly Cess Collection Trend");
+
+      renderActiveTabTable();
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      const tBtn = document.getElementById("tab-trader-btn");
+      const aBtn = document.getElementById("tab-agent-btn");
+
+      if (tab === "trader") {
+        tBtn.className = "px-4 py-1.5 text-sm font-bold rounded-md bg-white text-slate-900 border border-slate-300 shadow-sm";
+        aBtn.className = "px-4 py-1.5 text-sm font-semibold rounded-md text-slate-600 hover:text-slate-900 border border-transparent";
+      } else {
+        aBtn.className = "px-4 py-1.5 text-sm font-bold rounded-md bg-white text-slate-900 border border-slate-300 shadow-sm";
+        tBtn.className = "px-4 py-1.5 text-sm font-semibold rounded-md text-slate-600 hover:text-slate-900 border border-transparent";
+      }
+
+      renderActiveTabTable();
+    }
+
+    function renderActiveTabTable() {
+      const filteredBills = getFilteredBills();
+      const month = document.getElementById("filter-month").value;
+      const search = (document.getElementById("table-search").value || "").toLowerCase().trim();
+      const sort = document.getElementById("table-sort").value;
+
+      const thead = document.getElementById("table-head-row");
+      const tbody = document.getElementById("summary-table-body");
+      const foot = document.getElementById("table-footer-info");
+
+      if (activeTab === "trader") {
+        thead.innerHTML = `
+          <th class="text-left">Trader ID</th>
+          <th class="text-left">Firm Name</th>
+          <th class="text-right">Bills</th>
+          <th class="text-right">Total Bags</th>
+          <th class="text-right">Fee Payable (₹)</th>
+          <th class="text-right">Paid (₹)</th>
+          <th class="text-right font-bold">Outstanding (₹)</th>
+          <th class="text-right">Action</th>
+        `;
+
+        let traders = AppState.getTraders().map(t => {
+          const tBills = filteredBills.filter(b => b.traderId === t.id);
+          const bags = tBills.reduce((acc, b) => acc + (b.finalBags || b.traderBags || b.agentBags || 0), 0);
+          const fee = bags * 2.0;
+
+          const tPayments = month === "all"
+            ? AppState.getPayments().filter(p => p.traderId === t.id)
+            : AppState.getPayments().filter(p => p.traderId === t.id && p.month === month);
+          const paid = tPayments.reduce((acc, p) => acc + p.amountPaid, 0);
+          const outstanding = Math.max(0, fee - paid);
+
+          return {
+            id: t.id,
+            name: t.firmName,
+            billsCount: tBills.length,
+            bags,
+            fee,
+            paid,
+            outstanding
+          };
+        });
+
+        if (search) {
+          traders = traders.filter(t => t.name.toLowerCase().includes(search) || t.id.toLowerCase().includes(search));
+        }
+
+        if (sort === "outstanding-desc") traders.sort((a,b) => b.outstanding - a.outstanding);
+        else if (sort === "bags-desc") traders.sort((a,b) => b.bags - a.bags);
+        else if (sort === "name-asc") traders.sort((a,b) => a.name.localeCompare(b.name));
+
+        if (traders.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500">No traders found matching search criteria.</td></tr>`;
+          renderStandardPagination("table-footer-info", { totalItems: 0 });
+          return;
+        }
+
+        tbody.innerHTML = traders.map(t => `
+          <tr>
+            <td class="text-left font-mono text-slate-500 font-medium">${t.id}</td>
+            <td class="text-left font-semibold text-slate-900">
+              <a href="./trader-detail.html?id=${t.id}" class="hover:text-blue-700 hover:underline">${t.name}</a>
+            </td>
+            <td class="text-right tabular-nums text-slate-600">${t.billsCount}</td>
+            <td class="text-right tabular-nums font-semibold text-slate-900">${AppState.formatNumber(t.bags)}</td>
+            <td class="text-right tabular-nums text-slate-900">${AppState.formatCurrency(t.fee)}</td>
+            <td class="text-right tabular-nums text-emerald-700 font-medium">${AppState.formatCurrency(t.paid)}</td>
+            <td class="text-right tabular-nums font-bold ${t.outstanding > 0 ? 'text-amber-700' : 'text-slate-600'}">${AppState.formatCurrency(t.outstanding)}</td>
+            <td class="text-right">
+              <a href="./trader-detail.html?id=${t.id}" class="text-xs font-semibold text-blue-700 hover:underline">Ledger &rarr;</a>
+            </td>
+          </tr>
+        `).join("");
+
+        renderStandardPagination("table-footer-info", { totalItems: traders.length, pageSize: 10 });
+
+      } else {
+        thead.innerHTML = `
+          <th class="text-left">Agent ID</th>
+          <th class="text-left">Agency Firm Name</th>
+          <th class="text-right">Bills Entered</th>
+          <th class="text-right">Total Bags Dispatched</th>
+          <th class="text-right">Agent Fee (₹0.50/bag)</th>
+          <th class="text-right">Action</th>
+        `;
+
+        let agents = AppState.getAgents().map(a => {
+          const aBills = filteredBills.filter(b => b.agentId === a.id);
+          const bags = aBills.reduce((acc, b) => acc + (b.agentBags || 0), 0);
+          const fee = bags * 0.50;
+
+          return {
+            id: a.id,
+            name: a.firmName,
+            billsCount: aBills.length,
+            bags,
+            fee
+          };
+        });
+
+        if (search) {
+          agents = agents.filter(a => a.name.toLowerCase().includes(search) || a.id.toLowerCase().includes(search));
+        }
+
+        if (sort === "bags-desc") agents.sort((a,b) => b.bags - a.bags);
+        else if (sort === "name-asc") agents.sort((a,b) => a.name.localeCompare(b.name));
+
+        if (agents.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500">No agents found matching search criteria.</td></tr>`;
+          renderStandardPagination("table-footer-info", { totalItems: 0 });
+          return;
+        }
+
+        tbody.innerHTML = agents.map(a => `
+          <tr>
+            <td class="text-left font-mono text-slate-500 font-medium">${a.id}</td>
+            <td class="text-left font-semibold text-slate-900">
+              <a href="./agent-detail.html?id=${a.id}" class="hover:text-blue-700 hover:underline">${a.name}</a>
+            </td>
+            <td class="text-right tabular-nums text-slate-600">${a.billsCount}</td>
+            <td class="text-right tabular-nums font-semibold text-slate-900">${AppState.formatNumber(a.bags)}</td>
+            <td class="text-right tabular-nums font-bold text-slate-900">${AppState.formatCurrency(a.fee)}</td>
+            <td class="text-right">
+              <a href="./agent-detail.html?id=${a.id}" class="text-xs font-semibold text-blue-700 hover:underline">View Sales &rarr;</a>
+            </td>
+          </tr>
+        `).join("");
+
+        renderStandardPagination("table-footer-info", { totalItems: agents.length, pageSize: 10 });
+      }
+    }
+  </script>
+</body>
+</html>

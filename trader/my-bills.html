@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Inbound Bills - Market Association Fee Tracking</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/mock-data.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased font-sans">
+
+  <div id="app-layout">
+    <div class="space-y-6">
+      
+      <!-- Top Title Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Inbound Purchase Bills</h1>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <a href="./add-bill.html" class="btn-erp btn-erp-primary text-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Inbound Bill
+          </a>
+        </div>
+      </div>
+
+      <!-- Filters & Search Toolbar -->
+      <div class="bg-white border border-slate-200 rounded-md p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-3">
+          
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Status</label>
+            <select id="trader-filter-status" onchange="renderTraderBillsTable()" class="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-800 font-medium focus:border-blue-600 focus:outline-none">
+              <option value="all">All Statuses</option>
+              <option value="Mismatch" selected>Open Mismatches Only</option>
+              <option value="Matched">Matched & Reconciled</option>
+              <option value="Pending">Awaiting Agent Entry</option>
+              <option value="Resolved">Resolved by Association</option>
+              <option value="Locked">Locked Period Bills</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Month</label>
+            <select id="trader-filter-month" onchange="renderTraderBillsTable()" class="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-800 font-medium focus:border-blue-600 focus:outline-none">
+              <option value="2026-10" selected>October 2026</option>
+              <option value="2026-09">September 2026</option>
+              <option value="all">All Months</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Search</label>
+            <input type="text" id="trader-bill-search" oninput="renderTraderBillsTable()" placeholder="Bill no or agent firm..." class="px-3 py-2 text-sm border border-slate-300 rounded-md w-56 focus:border-blue-600 focus:outline-none">
+          </div>
+
+        </div>
+
+        <div class="text-xs text-slate-500 flex items-center gap-2 self-start md:self-auto">
+          <span class="inline-block w-3 h-3 rounded-sm bg-rose-50 border border-rose-300 border-l-2 border-l-rose-600"></span>
+          <span>Red border indicates bag count discrepancy</span>
+        </div>
+      </div>
+
+      <!-- Bills Table -->
+      <div class="bg-white border border-slate-200 rounded-md overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Bill No</th>
+                <th class="text-left">Date</th>
+                <th class="text-left">Commission Agent Firm</th>
+                <th class="text-right">Agent Count</th>
+                <th class="text-right">My Verified Count</th>
+                <th class="text-center">Status</th>
+                <th class="text-right">Fee (₹2/bag)</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="trader-bills-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="trader-bills-foot"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Edit & Re-verify Modal for Trader -->
+  <div id="edit-trader-modal" class="fixed inset-0 z-50 bg-slate-900/50 hidden flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-lg max-w-lg w-full p-6 shadow-xl">
+      
+      <div class="flex items-center justify-between pb-3.5 border-b border-slate-200">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Correct Inbound Bag Count</h3>
+          <span id="trd-edit-modal-bill-no" class="font-mono text-sm text-blue-700 font-bold">#BILL</span>
+        </div>
+        <button onclick="closeTraderEditModal()" class="text-slate-400 hover:text-slate-700 text-xl font-bold leading-none">&times;</button>
+      </div>
+
+      <div class="py-5 space-y-4">
+        
+        <!-- Comparative Count Box -->
+        <div class="grid grid-cols-2 gap-4 bg-slate-50 border border-slate-200 rounded-md p-4 text-sm">
+          <div>
+            <span class="text-slate-500 block text-xs font-medium">Commission Agent Entry</span>
+            <span id="trd-modal-agent-count" class="text-2xl font-bold text-slate-900 tabular-nums mt-1 block">0 bags</span>
+            <span id="trd-modal-agent-firm" class="text-xs text-slate-500 block truncate mt-1">Agent Firm</span>
+          </div>
+          <div class="border-l border-slate-200 pl-4">
+            <span class="text-slate-500 block text-xs font-medium">My Recorded Count</span>
+            <span id="trd-modal-my-count" class="text-2xl font-bold text-blue-700 tabular-nums mt-1 block">0 bags</span>
+            <span class="text-xs text-slate-500 block mt-1">Trader goods receipt</span>
+          </div>
+        </div>
+
+        <!-- Edit Form -->
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1.5" for="trd-modal-corrected-bags">Enter Correct Bag Count <span class="text-rose-600">*</span></label>
+          <input type="number" id="trd-modal-corrected-bags" min="1" step="1" required class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-md font-bold text-slate-900 tabular-nums focus:border-blue-600 focus:outline-none">
+          <p class="text-xs text-slate-500 mt-1">If your revised count matches the agent's count, the bill will be verified and marked Matched immediately.</p>
+        </div>
+
+        <!-- Audit Drawer Preview -->
+        <div class="pt-3 border-t border-slate-200">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Audit History</span>
+          <div id="trd-modal-audit-list" class="space-y-2 max-h-32 overflow-y-auto pr-1 text-xs">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex justify-end gap-3 pt-4 border-t border-slate-200">
+        <button onclick="closeTraderEditModal()" class="btn-erp btn-erp-secondary text-sm px-4 py-2">Cancel</button>
+        <button onclick="saveTraderCorrectedCount()" class="btn-erp btn-erp-primary text-sm px-4 py-2">Save & Re-verify</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/layout.js"></script>
+  <script>
+    let activeTraderEditingBillId = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("filter")) {
+        document.getElementById("trader-filter-status").value = params.get("filter");
+      }
+      renderTraderBillsTable();
+
+      if (params.get("edit")) {
+        setTimeout(() => openTraderEditModal(params.get("edit")), 100);
+      }
+    });
+
+    function renderTraderBillsTable() {
+      const user = AppState.getCurrentUser();
+      const traderId = (user && user.id && user.id.startsWith("TRD")) ? user.id : "TRD-201";
+
+      const statusFilter = document.getElementById("trader-filter-status").value;
+      const monthFilter = document.getElementById("trader-filter-month").value;
+      const query = (document.getElementById("trader-bill-search").value || "").toLowerCase().trim();
+
+      const allBills = AppState.getBills().filter(b => b.traderId === traderId);
+      const mismatchesCount = allBills.filter(b => b.status === "Mismatch").length;
+      const mismatchPill = document.getElementById("trader-mismatch-pill");
+      if (mismatchPill) mismatchPill.textContent = `${mismatchesCount} Open Mismatches`;
+
+      let filtered = allBills;
+      if (statusFilter !== "all") {
+        filtered = filtered.filter(b => b.status === statusFilter);
+      }
+      if (monthFilter !== "all") {
+        filtered = filtered.filter(b => b.month === monthFilter);
+      }
+      if (query) {
+        filtered = filtered.filter(b => b.billNo.toLowerCase().includes(query) || (b.agentName && b.agentName.toLowerCase().includes(query)));
+      }
+
+      const tbody = document.getElementById("trader-bills-tbody");
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-500">No bills found for the selected filters.</td></tr>`;
+        renderStandardPagination("trader-bills-foot", { totalItems: 0 });
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(b => {
+        const isMismatch = b.status === "Mismatch";
+        const isLocked = b.status === "Locked";
+        const fee = (b.finalBags || b.traderBags || b.agentBags || 0) * (b.ratePerBag || 2.0);
+
+        return `
+          <tr class="${isMismatch ? 'row-mismatch' : ''}">
+            <td class="text-left font-mono font-bold text-slate-900">${b.billNo}</td>
+            <td class="text-left text-slate-600 tabular-nums">${AppState.formatDate(b.date)}</td>
+            <td class="text-left font-medium text-slate-900">${b.agentName}</td>
+            <td class="text-right tabular-nums text-slate-600">${b.agentBags !== null ? AppState.formatNumber(b.agentBags) : '<span class="text-slate-400">--</span>'}</td>
+            <td class="text-right tabular-nums font-semibold text-slate-900">${b.traderBags !== null ? AppState.formatNumber(b.traderBags) : '<span class="text-slate-400">--</span>'}</td>
+            <td class="text-center"><span class="status-badge ${getBillBadge(b.status)}">${b.status}</span></td>
+            <td class="text-right font-mono font-semibold text-slate-900 tabular-nums">${AppState.formatCurrency(fee)}</td>
+            <td class="text-right whitespace-nowrap">
+              ${isLocked ? `
+                <span class="inline-flex items-center text-slate-400 text-xs" title="Period Locked by Association">
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                  Locked
+                </span>
+              ` : (isMismatch ? `
+                <button onclick="openTraderEditModal('${b.id}')" class="btn-erp btn-erp-danger py-1 px-2.5 text-xs font-semibold">
+                  Fix Count
+                </button>
+              ` : `
+                <button onclick="openTraderEditModal('${b.id}')" class="text-sm font-medium text-blue-700 hover:underline">
+                  Edit Count
+                </button>
+              `)}
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderStandardPagination("trader-bills-foot", { totalItems: filtered.length, pageSize: 15 });
+    }
+
+    function getBillBadge(status) {
+      if (status === "Matched") return "badge-matched";
+      if (status === "Mismatch") return "badge-mismatch";
+      if (status === "Pending") return "badge-pending";
+      if (status === "Resolved") return "badge-resolved";
+      return "badge-locked";
+    }
+
+    function openTraderEditModal(billId) {
+      const bill = AppState.getBills().find(b => b.id === billId);
+      if (!bill) return;
+
+      if (bill.status === "Locked") {
+        showToast("This bill belongs to a locked billing period and cannot be altered.", "error");
+        return;
+      }
+
+      activeTraderEditingBillId = bill.id;
+      document.getElementById("trd-edit-modal-bill-no").textContent = `Bill #${bill.billNo}`;
+      document.getElementById("trd-modal-agent-count").textContent = `${bill.agentBags !== null ? AppState.formatNumber(bill.agentBags) : '--'} bags`;
+      document.getElementById("trd-modal-agent-firm").textContent = bill.agentName;
+      document.getElementById("trd-modal-my-count").textContent = `${bill.traderBags !== null ? AppState.formatNumber(bill.traderBags) : '--'} bags`;
+      document.getElementById("trd-modal-corrected-bags").value = bill.traderBags || "";
+
+      // Audit list
+      const auditDiv = document.getElementById("trd-modal-audit-list");
+      if (bill.auditTrail && bill.auditTrail.length > 0) {
+        auditDiv.innerHTML = bill.auditTrail.map(a => `
+          <div class="p-2 bg-slate-50 border border-slate-200 rounded text-xs">
+            <span class="font-semibold text-slate-800">${a.action}</span> &bull; <span class="text-slate-500">${a.timestamp}</span>
+            <div class="text-slate-600 mt-0.5">${a.user}: ${a.details}</div>
+          </div>
+        `).join("");
+      } else {
+        auditDiv.innerHTML = `<span class="text-slate-400 text-xs">No prior modifications recorded.</span>`;
+      }
+
+      document.getElementById("edit-trader-modal").classList.remove("hidden");
+    }
+
+    function closeTraderEditModal() {
+      document.getElementById("edit-trader-modal").classList.add("hidden");
+      activeTraderEditingBillId = null;
+    }
+
+    function saveTraderCorrectedCount() {
+      const count = document.getElementById("trd-modal-corrected-bags").value;
+      const user = AppState.getCurrentUser();
+
+      try {
+        const updated = AppState.updateBillPartyBags(activeTraderEditingBillId, "trader", count, user.firmName || "Trader");
+        closeTraderEditModal();
+
+        if (updated.status === "Matched") {
+          showToast(`Verified! Bill #${updated.billNo} is now matched with Agent (${count} bags).`, "success");
+        } else {
+          showToast(`Count updated to ${count}. Discrepancy remains against Agent count (${updated.agentBags} bags).`, "warning");
+        }
+
+        renderTraderBillsTable();
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    }
+  </script>
+</body>
+</html>

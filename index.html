@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Association Fee Tracking System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./css/styles.css">
+  <script src="./js/mock-data.js"></script>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 min-h-screen flex flex-col justify-between">
+
+  <!-- Clean Top Header -->
+  <header class="bg-white border-b border-slate-200 h-16 flex items-center px-4 sm:px-8 justify-between shadow-sm">
+    <div class="flex items-center space-x-3">
+      <span class="w-9 h-9 rounded-md bg-[#1D4ED8] text-white font-bold text-sm flex items-center justify-center shadow-sm">
+        AP
+      </span>
+      <div>
+        <span class="text-base sm:text-lg font-bold text-slate-900 tracking-tight block">Market Association Fee Tracking</span>
+      </div>
+    </div>
+    
+    <div class="flex items-center space-x-4 text-sm">
+      <button onclick="AppState.reset(); location.reload();" class="text-xs text-slate-500 hover:text-slate-800 font-medium hover:underline">Reset Demo Data</button>
+      <span class="text-slate-300">|</span>
+      <span class="text-slate-500 font-medium">FY 2026-27</span>
+      <span class="text-slate-300">|</span>
+      <a href="./login.html" class="text-[#1D4ED8] font-semibold hover:underline">Staff & Member Login</a>
+    </div>
+  </header>
+
+  <!-- Main Body Content -->
+  <main class="max-w-5xl w-full mx-auto px-4 py-8 flex-1">
+    
+    <!-- Top System Header -->
+    <div class="mb-8 pb-6 border-b border-slate-200">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Market Association Fee Tracking System</h1>
+          <p class="text-sm sm:text-base text-slate-600 mt-1">Dual-entry bill reconciliation between Commission Agents and Registered Traders</p>
+        </div>
+        <div class="text-sm font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-md border border-emerald-200 self-start sm:self-auto">
+          Active Billing Period: Oct 2026
+        </div>
+      </div>
+
+      <!-- Metric Strip -->
+      <div id="landing-metrics" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Workspace Portals Grid -->
+    <div class="mb-10">
+      <h2 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Select Workspace</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        
+        <!-- Portal 1: Association Office -->
+        <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors">
+          <div>
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <span class="text-base font-bold text-slate-900">Association Office</span>
+              <span class="status-badge badge-locked">Admin</span>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed mb-4">
+              Manage member approvals, arbitrate bill count mismatches, process monthly fees, record dues, and issue official payment vouchers.
+            </p>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100">
+            <button onclick="launchPortal('association')" class="w-full py-2.5 px-4 bg-[#1D4ED8] hover:bg-[#1E40AF] text-white font-semibold text-sm rounded-md transition-colors shadow-sm">
+              Open Association Office &rarr;
+            </button>
+          </div>
+        </div>
+
+        <!-- Portal 2: Commission Agent -->
+        <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors">
+          <div>
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <span class="text-base font-bold text-slate-900">Commission Agent</span>
+              <span class="status-badge badge-approved">Seller</span>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed mb-4">
+              Enter outbound sales takka bills. Verify bill counts against trader inward arrivals and review fees.
+            </p>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 space-y-2">
+            <button onclick="launchPortal('agent', 'AGT-101')" class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-md transition-colors shadow-sm">
+              Open as Kisan Agro Agency &rarr;
+            </button>
+            <a href="./register-agent.html" class="block text-center text-xs text-[#1D4ED8] hover:underline font-medium">New Agent Registration</a>
+          </div>
+        </div>
+
+        <!-- Portal 3: Registered Trader -->
+        <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors">
+          <div>
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <span class="text-base font-bold text-slate-900">Registered Trader</span>
+              <span class="status-badge badge-approved">Buyer</span>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed mb-4">
+              Confirm inbound delivered bag counts, reconcile purchase bills against physical stock, track continuous cess ledger, and view receipts.
+            </p>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 space-y-2">
+            <button onclick="launchPortal('trader', 'TRD-201')" class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-md transition-colors shadow-sm">
+              Open as Shree Ganesh Traders &rarr;
+            </button>
+            <a href="./register-trader.html" class="block text-center text-xs text-[#1D4ED8] hover:underline font-medium">New Trader Registration</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Navigation Directory -->
+    <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+        <span class="text-sm font-bold text-slate-900 uppercase tracking-wide">Wireframe Pages Directory (21 Views)</span>
+        <span class="text-xs text-slate-500 font-medium">All Mock Pages</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+        <div>
+          <div class="font-bold text-slate-900 mb-2 pb-1 border-b border-slate-100">Association Office</div>
+          <ul class="space-y-1.5 text-slate-600">
+            <li><a href="./association/dashboard.html" class="hover:text-[#1D4ED8] hover:underline">Dashboard</a></li>
+            <li><a href="./association/approvals.html" class="hover:text-[#1D4ED8] hover:underline">User Approvals</a></li>
+            <li><a href="./association/users.html" class="hover:text-[#1D4ED8] hover:underline">Market Directory</a></li>
+            <li><a href="./association/agent-detail.html?id=AGT-101" class="hover:text-[#1D4ED8] hover:underline">Agent Record</a></li>
+            <li><a href="./association/trader-detail.html?id=TRD-201" class="hover:text-[#1D4ED8] hover:underline">Trader Ledger</a></li>
+            <li><a href="./association/bills.html" class="hover:text-[#1D4ED8] hover:underline">Master Bills & Resolution</a></li>
+            <li><a href="./association/rate-settings.html" class="hover:text-[#1D4ED8] hover:underline">Rate Settings</a></li>
+            <li><a href="./association/monthly-processing.html" class="hover:text-[#1D4ED8] hover:underline">Monthly Processing</a></li>
+            <li><a href="./association/payments.html" class="hover:text-[#1D4ED8] hover:underline">Payments & Dues</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="font-bold text-slate-900 mb-2 pb-1 border-b border-slate-100">Commission Agent</div>
+          <ul class="space-y-1.5 text-slate-600">
+            <li><a href="./agent/dashboard.html" class="hover:text-[#1D4ED8] hover:underline">Agent Dashboard</a></li>
+            <li><a href="./agent/add-bill.html" class="hover:text-[#1D4ED8] hover:underline">Add Outbound Bill</a></li>
+            <li><a href="./agent/my-bills.html" class="hover:text-[#1D4ED8] hover:underline">My Bills & Mismatches</a></li>
+            <li><a href="./agent/fees.html" class="hover:text-[#1D4ED8] hover:underline">Fee Statements</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="font-bold text-slate-900 mb-2 pb-1 border-b border-slate-100">Registered Trader</div>
+          <ul class="space-y-1.5 text-slate-600">
+            <li><a href="./trader/dashboard.html" class="hover:text-[#1D4ED8] hover:underline">Trader Dashboard</a></li>
+            <li><a href="./trader/add-bill.html" class="hover:text-[#1D4ED8] hover:underline">Add Inbound Bill</a></li>
+            <li><a href="./trader/my-bills.html" class="hover:text-[#1D4ED8] hover:underline">My Inbound Bills</a></li>
+            <li><a href="./trader/fees-and-receipts.html" class="hover:text-[#1D4ED8] hover:underline">Ledger & Receipts</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const bills = AppState.getBills();
+      const currentMonthBills = bills.filter(b => b.month === "2026-10");
+      const totalBags = currentMonthBills.reduce((acc, b) => acc + (b.finalBags || b.agentBags || b.traderBags || 0), 0);
+      const mismatches = currentMonthBills.filter(b => b.status === "Mismatch").length;
+      const pendingUsers = AppState.getAgents().filter(a => a.status === "Pending").length + AppState.getTraders().filter(t => t.status === "Pending").length;
+      const traderRate = AppState.getRates().traderRate;
+
+      const container = document.getElementById("landing-metrics");
+      if (container) {
+        container.innerHTML = `
+          <div class="bg-white border border-slate-200 rounded-md p-3.5 shadow-sm">
+            <span class="text-xs uppercase font-bold text-slate-500 block">October Bags</span>
+            <span class="text-xl font-bold text-slate-900 tabular-nums mt-0.5 block">${AppState.formatNumber(totalBags)}</span>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-md p-3.5 shadow-sm">
+            <span class="text-xs uppercase font-bold text-slate-500 block">Trader Cess Rate</span>
+            <span class="text-xl font-bold text-slate-900 tabular-nums mt-0.5 block">₹${traderRate.toFixed(2)} <span class="text-xs font-normal text-slate-500">/ bag</span></span>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-md p-3.5 shadow-sm">
+            <span class="text-xs uppercase font-bold text-slate-500 block">Open Mismatches</span>
+            <span class="text-xl font-bold ${mismatches > 0 ? 'text-red-600' : 'text-slate-900'} tabular-nums mt-0.5 block">${mismatches} bills</span>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-md p-3.5 shadow-sm">
+            <span class="text-xs uppercase font-bold text-slate-500 block">Pending Approvals</span>
+            <span class="text-xl font-bold ${pendingUsers > 0 ? 'text-amber-600' : 'text-slate-900'} tabular-nums mt-0.5 block">${pendingUsers} users</span>
+          </div>
+        `;
+      }
+    });
+
+    function launchPortal(role, userId) {
+      AppState.setCurrentRole(role, userId);
+      if (role === "association") window.location.href = "./association/dashboard.html";
+      else if (role === "agent") window.location.href = "./agent/dashboard.html";
+      else if (role === "trader") window.location.href = "./trader/dashboard.html";
+    }
+  </script>
+</body>
+</html>

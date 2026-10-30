@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bills & Mismatches - Fee Tracking System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/mock-data.js"></script>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 antialiased font-sans">
+
+  <div id="app-layout">
+    <div class="space-y-6">
+      
+      <!-- Top Title Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Bills & Reconciliation Register</h1>
+        </div>
+      </div>
+
+      <!-- Filters & Search Toolbar -->
+      <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 flex-1 text-sm">
+          
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Status</label>
+            <select id="bill-filter-status" onchange="renderBillsTable()" class="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-md bg-white text-slate-800 font-medium focus:outline-none">
+              <option value="all">All Statuses</option>
+              <option value="Mismatch" selected>Discrepancies (Mismatch)</option>
+              <option value="Matched">Matched & Verified</option>
+              <option value="Pending">Pending Dual-Entry</option>
+              <option value="Resolved">Resolved by Office</option>
+              <option value="Locked">Locked Period Bills</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Commission Agent</label>
+            <select id="bill-filter-agent" onchange="renderBillsTable()" class="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-md bg-white text-slate-800 focus:outline-none">
+              <option value="all">All Agents</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Trader</label>
+            <select id="bill-filter-trader" onchange="renderBillsTable()" class="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-md bg-white text-slate-800 focus:outline-none">
+              <option value="all">All Traders</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Month</label>
+            <select id="bill-filter-month" onchange="renderBillsTable()" class="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-md bg-white text-slate-800 focus:outline-none">
+              <option value="all">All Months</option>
+              <option value="2026-10" selected>October 2026</option>
+              <option value="2026-09">September 2026</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div class="self-end lg:self-center w-full lg:w-48 pt-1 lg:pt-5">
+          <input type="text" id="bill-search" oninput="renderBillsTable()" placeholder="Search bill no..." class="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none">
+        </div>
+      </div>
+
+      <!-- Bills Master Table -->
+      <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div class="table-responsive">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Bill No</th>
+                <th class="text-left">Date</th>
+                <th class="text-left">Commission Agent</th>
+                <th class="text-left">Trader Firm</th>
+                <th class="text-right">Agent Bags</th>
+                <th class="text-right">Trader Bags</th>
+                <th class="text-right">Final Count</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Source</th>
+              </tr>
+            </thead>
+            <tbody id="bills-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="bills-foot">
+          <!-- Rendered by renderStandardPagination -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/layout.js"></script>
+  <script>
+
+    document.addEventListener("DOMContentLoaded", () => {
+      populateFilterDropdowns();
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("status")) {
+        document.getElementById("bill-filter-status").value = params.get("status");
+      }
+
+      renderBillsTable();
+    });
+
+    function populateFilterDropdowns() {
+      const aSelect = document.getElementById("bill-filter-agent");
+      AppState.getAgents().forEach(a => {
+        const opt = document.createElement("option");
+        opt.value = a.id;
+        opt.textContent = a.firmName;
+        aSelect.appendChild(opt);
+      });
+
+      const tSelect = document.getElementById("bill-filter-trader");
+      AppState.getTraders().forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.id;
+        opt.textContent = t.firmName;
+        tSelect.appendChild(opt);
+      });
+    }
+
+    function renderBillsTable() {
+      const status = document.getElementById("bill-filter-status").value;
+      const agentId = document.getElementById("bill-filter-agent").value;
+      const traderId = document.getElementById("bill-filter-trader").value;
+      const month = document.getElementById("bill-filter-month").value;
+      const search = (document.getElementById("bill-search").value || "").toLowerCase().trim();
+
+      let bills = AppState.getBills();
+
+      const totalMismatches = bills.filter(b => b.status === "Mismatch").length;
+      const mismatchBadge = document.getElementById("open-mismatches-badge");
+      if (mismatchBadge) mismatchBadge.textContent = `${totalMismatches} Open Mismatches`;
+
+      if (status !== "all") bills = bills.filter(b => b.status === status);
+      if (agentId !== "all") bills = bills.filter(b => b.agentId === agentId);
+      if (traderId !== "all") bills = bills.filter(b => b.traderId === traderId);
+      if (month !== "all") bills = bills.filter(b => b.month === month);
+
+      if (search) {
+        bills = bills.filter(b => 
+          b.billNo.toLowerCase().includes(search) ||
+          b.agentName.toLowerCase().includes(search) ||
+          b.traderName.toLowerCase().includes(search)
+        );
+      }
+
+      const tbody = document.getElementById("bills-tbody");
+      if (bills.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-500">No bills match the selected filters.</td></tr>`;
+        renderStandardPagination("bills-foot", { totalItems: 0 });
+        return;
+      }
+
+      tbody.innerHTML = bills.map(b => {
+        const isMismatch = b.status === "Mismatch";
+        const finalCount = b.finalBags || (b.status === "Matched" ? b.agentBags : null);
+
+        return `
+          <tr class="${isMismatch ? 'row-mismatch' : ''}">
+            <td class="text-left font-mono font-bold text-slate-900">${b.billNo}</td>
+            <td class="text-left text-slate-600 tabular-nums">${AppState.formatDate(b.date)}</td>
+            <td class="text-left font-medium text-slate-900">${b.agentName}</td>
+            <td class="text-left font-medium text-slate-900">${b.traderName}</td>
+            <td class="text-right tabular-nums text-slate-700">${b.agentBags !== null ? AppState.formatNumber(b.agentBags) : '<span class="text-slate-400">--</span>'}</td>
+            <td class="text-right tabular-nums text-slate-700">${b.traderBags !== null ? AppState.formatNumber(b.traderBags) : '<span class="text-slate-400">--</span>'}</td>
+            <td class="text-right tabular-nums font-bold text-slate-900">${finalCount !== null ? AppState.formatNumber(finalCount) : '<span class="text-slate-400">--</span>'}</td>
+            <td class="text-center">
+              <span class="status-badge ${getBillBadge(b.status)}">${b.status}</span>
+            </td>
+            <td class="text-center">
+              <span class="text-xs font-mono text-slate-500">${b.source}</span>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderStandardPagination("bills-foot", { totalItems: bills.length, pageSize: 15 });
+    }
+
+    function getBillBadge(status) {
+      if (status === "Matched") return "badge-matched";
+      if (status === "Mismatch") return "badge-mismatch";
+      if (status === "Pending") return "badge-pending";
+      if (status === "Resolved") return "badge-resolved";
+      return "badge-locked";
+    }
+  </script>
+</body>
+</html>

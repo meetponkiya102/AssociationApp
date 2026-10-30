@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Directory - Market Association Fee Tracking</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/mock-data.js"></script>
+</head>
+
+<body class="bg-slate-50 text-slate-900 antialiased font-sans">
+
+  <div id="app-layout">
+    <div class="space-y-6">
+
+      <!-- Top Bar (Green pill removed as requested) -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Market Members Directory</h1>
+        </div>
+
+        <a href="./approvals.html"
+          class="text-sm text-blue-700 hover:underline font-semibold flex items-center gap-1.5">
+          Pending Approvals &rarr;
+        </a>
+      </div>
+
+      <!-- Filters & Search Toolbar (Radio button filters replacing dropdowns, Export removed) -->
+      <div
+        class="bg-white border border-slate-200 rounded-md p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-sm">
+
+        <!-- Search Input -->
+        <div class="w-full lg:w-72">
+          <input type="text" id="user-search" oninput="renderUsersTable()" placeholder="Search firm, name, phone..."
+            class="w-full px-3.5 py-2 border border-slate-300 rounded-md text-sm focus:border-blue-600 focus:outline-none">
+        </div>
+
+        <!-- Radio Filter Groups -->
+        <div class="flex flex-wrap items-center gap-5 text-sm text-slate-700">
+
+          <!-- Role Radio Group: All, Agents, Traders -->
+          <div class="flex items-center gap-2.5">
+            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Role:</span>
+            <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5">
+              <label class="inline-flex items-center gap-1.5 cursor-pointer font-medium hover:text-slate-900">
+                <input type="radio" name="user-role-filter" value="all" checked onchange="renderUsersTable()"
+                  class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                <span>All</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer font-medium hover:text-slate-900">
+                <input type="radio" name="user-role-filter" value="agent" onchange="renderUsersTable()"
+                  class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                <span>Agents</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer font-medium hover:text-slate-900">
+                <input type="radio" name="user-role-filter" value="trader" onchange="renderUsersTable()"
+                  class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                <span>Traders</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Status Radio Group: All, Approved, Rejected -->
+          <div class="flex items-center gap-2.5">
+            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Status:</span>
+            <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5">
+              <label class="inline-flex items-center gap-1.5 cursor-pointer font-medium hover:text-slate-900">
+                <input type="radio" name="user-status-filter" value="all" checked onchange="renderUsersTable()"
+                  class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                <span>All</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer font-medium hover:text-slate-900">
+                <input type="radio" name="user-status-filter" value="Approved" onchange="renderUsersTable()"
+                  class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                <span>Approved</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer font-medium hover:text-slate-900">
+                <input type="radio" name="user-status-filter" value="Rejected" onchange="renderUsersTable()"
+                  class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                <span>Rejected</span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Users Table -->
+      <div class="bg-white border border-slate-200 rounded-md overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Code & Role</th>
+                <th class="text-left">Firm Name & Proprietor</th>
+                <th class="text-left">License / GSTIN</th>
+                <th class="text-left">Contact Details</th>
+                <th class="text-left">Address</th>
+                <th class="text-center">Status</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="users-foot">
+          <!-- Rendered by renderStandardPagination -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/layout.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      renderUsersTable();
+    });
+
+    function renderUsersTable() {
+      const roleRadio = document.querySelector('input[name="user-role-filter"]:checked');
+      const roleFilter = roleRadio ? roleRadio.value : "all";
+
+      const statusRadio = document.querySelector('input[name="user-status-filter"]:checked');
+      const statusFilter = statusRadio ? statusRadio.value : "all";
+
+      const query = (document.getElementById("user-search").value || "").toLowerCase().trim();
+
+      let list = [];
+      if (roleFilter === "all" || roleFilter === "agent") {
+        list.push(...AppState.getAgents().map(a => ({ ...a, role: "agent" })));
+      }
+      if (roleFilter === "all" || roleFilter === "trader") {
+        list.push(...AppState.getTraders().map(t => ({ ...t, role: "trader" })));
+      }
+
+      if (statusFilter !== "all") {
+        list = list.filter(u => u.status === statusFilter);
+      }
+
+      if (query) {
+        list = list.filter(u =>
+          u.firmName.toLowerCase().includes(query) ||
+          u.name.toLowerCase().includes(query) ||
+          u.id.toLowerCase().includes(query) ||
+          (u.mobile && u.mobile.includes(query)) ||
+          (u.licenseNo && u.licenseNo.toLowerCase().includes(query)) ||
+          (u.gstNo && u.gstNo.toLowerCase().includes(query))
+        );
+      }
+
+      const tbody = document.getElementById("users-tbody");
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500">No matching members found.</td></tr>`;
+        renderStandardPagination("users-foot", { totalItems: 0 });
+        return;
+      }
+
+      tbody.innerHTML = list.map(item => {
+        const detailHref = item.role === "agent" ? `./agent-detail.html?id=${item.id}` : `./trader-detail.html?id=${item.id}`;
+        return `
+          <tr>
+            <td class="text-left font-mono">
+              <span class="font-bold text-slate-900">${item.id}</span>
+              <span class="block text-xs text-slate-500 uppercase font-sans mt-0.5">${item.role === 'agent' ? 'Agent' : 'Trader'}</span>
+            </td>
+            <td class="text-left">
+              <a href="${detailHref}" class="font-bold text-slate-900 hover:text-blue-700 hover:underline block">${item.firmName}</a>
+              <span class="text-xs text-slate-500 mt-0.5 block">${item.name}</span>
+            </td>
+            <td class="text-left font-mono text-slate-700">
+              ${item.licenseNo || item.gstNo || "-"}
+            </td>
+            <td class="text-left">
+              <div class="font-mono text-slate-900">+91 ${item.mobile}</div>
+              <div class="text-xs text-slate-500 mt-0.5">${item.email}</div>
+            </td>
+            <td class="text-left text-slate-600 max-w-xs truncate" title="${item.address}">
+              ${item.address}
+            </td>
+            <td class="text-center">
+              <span class="status-badge ${getBadgeClass(item.status)}">${item.status}</span>
+            </td>
+            <td class="text-right whitespace-nowrap">
+              <a href="${detailHref}" class="text-xs text-blue-700 hover:underline font-semibold">
+                ${item.role === 'trader' ? 'Ledger' : 'Record'} &rarr;
+              </a>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderStandardPagination("users-foot", { totalItems: list.length, pageSize: 10 });
+    }
+
+    function getBadgeClass(status) {
+      if (status === "Approved") return "badge-approved";
+      if (status === "Pending") return "badge-pending";
+      if (status === "Rejected") return "badge-rejected";
+      if (status === "Suspended") return "badge-suspended";
+      return "badge-locked";
+    }
+  </script>
+</body>
+
+</html>

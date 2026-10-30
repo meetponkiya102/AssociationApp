@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payments & Collections - Fee Tracking System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/mock-data.js"></script>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 antialiased font-sans">
+
+  <div id="app-layout">
+    <div class="space-y-6">
+      
+      <!-- Top Header & Actions -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Trader Payments & Settlements</h1>
+        </div>
+
+        <button onclick="openRecordPaymentModal()" class="btn-erp btn-erp-primary text-sm shadow-sm self-start sm:self-auto">
+          Record Payment Voucher
+        </button>
+      </div>
+
+      <!-- Dues Summary Strip -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+        <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+          <span class="text-xs text-slate-500 uppercase font-bold block">Invoiced Cess</span>
+          <span id="stat-total-invoiced" class="text-xl font-bold text-slate-900 font-mono mt-1 block tabular-nums">₹0.00</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+          <span class="text-xs text-slate-500 uppercase font-bold block">Total Collected</span>
+          <span id="stat-total-collected" class="text-xl font-bold text-emerald-700 font-mono mt-1 block tabular-nums">₹0.00</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm border-l-4 border-l-amber-600">
+          <span class="text-xs text-slate-500 uppercase font-bold block">Outstanding Balance</span>
+          <span id="stat-total-outstanding" class="text-xl font-black text-amber-700 font-mono mt-1 block tabular-nums">₹0.00</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+          <span class="text-xs text-slate-500 uppercase font-bold block">Receipts Issued</span>
+          <span id="stat-total-receipts" class="text-xl font-bold text-slate-900 font-mono mt-1 block tabular-nums">0 Vouchers</span>
+        </div>
+      </div>
+
+      <!-- Filters & Search Toolbar -->
+      <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+          
+          <select id="pay-filter-month" onchange="renderPaymentsTable()" class="px-3 py-1.5 border border-slate-300 rounded-md bg-white text-slate-800 font-medium focus:outline-none">
+            <option value="2026-10" selected>October 2026</option>
+            <option value="2026-09">September 2026</option>
+            <option value="all">All Months</option>
+          </select>
+
+          <select id="pay-filter-status" onchange="renderPaymentsTable()" class="px-3 py-1.5 border border-slate-300 rounded-md bg-white text-slate-800 font-medium focus:outline-none">
+            <option value="all">All Accounts</option>
+            <option value="unpaid">Outstanding Balance Only</option>
+            <option value="paid">Settled in Full</option>
+          </select>
+
+          <input type="text" id="pay-search" oninput="renderPaymentsTable()" placeholder="Search trader..." class="px-3 py-1.5 border border-slate-300 rounded-md w-52 focus:outline-none">
+
+        </div>
+      </div>
+
+      <!-- Trader Dues Master Table -->
+      <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div class="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+          <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Trader Fee Balances & Settlement Register</span>
+          <span class="text-xs text-slate-500 font-mono">Partial payments supported</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Trader Firm Name</th>
+                <th class="text-left">Month</th>
+                <th class="text-right">Bags</th>
+                <th class="text-right">Total Fee Due</th>
+                <th class="text-right">Amount Paid</th>
+                <th class="text-right font-bold">Outstanding</th>
+                <th class="text-center">Status</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="payments-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div id="payments-foot"></div>
+      </div>
+
+      <!-- Recent Payment Vouchers Dispatched -->
+      <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div class="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+          <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Recent Receipt Vouchers Generated</span>
+          <span class="text-xs text-slate-500 font-mono">Receipt serial register</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Receipt No</th>
+                <th class="text-left">Date</th>
+                <th class="text-left">Trader Name</th>
+                <th class="text-left">Mode</th>
+                <th class="text-left">Bank Ref No</th>
+                <th class="text-right">Amount Received</th>
+                <th class="text-center">WhatsApp Delivery</th>
+                <th class="text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-receipts-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div id="recent-receipts-foot"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Record Payment Modal -->
+  <div id="payment-modal" class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-lg max-w-md w-full p-5 shadow-xl">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Record Fee Collection Voucher</h3>
+          <span class="text-xs text-slate-500">Auto-sends receipt on WhatsApp</span>
+        </div>
+        <button onclick="closeRecordPaymentModal()" class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+      </div>
+
+      <form id="record-payment-form" onsubmit="handleSavePayment(event)" class="space-y-4 pt-4">
+        
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">Select Trader <span class="text-red-600">*</span></label>
+          <select id="modal-trader-select" onchange="onTraderSelectChanged()" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md font-medium focus:outline-none">
+            <!-- Options populated by JS -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Billing Month <span class="text-red-600">*</span></label>
+            <select id="modal-month-select" onchange="onTraderSelectChanged()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md font-medium focus:outline-none">
+              <option value="2026-10" selected>October 2026</option>
+              <option value="2026-09">September 2026</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Payment Date <span class="text-red-600">*</span></label>
+            <input type="date" id="modal-date-input" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Calculated Outstanding Box -->
+        <div class="bg-slate-50 border border-slate-200 rounded-md p-3 text-sm">
+          <div class="flex justify-between items-center text-slate-600">
+            <span>Outstanding Balance for Period:</span>
+            <span id="modal-calc-outstanding" class="font-bold text-slate-900 font-mono tabular-nums">₹0.00</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Amount Received (₹) <span class="text-red-600">*</span></label>
+            <input type="number" id="modal-amount-input" step="1" min="1" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md font-bold font-mono focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Payment Mode <span class="text-red-600">*</span></label>
+            <select id="modal-mode-select" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md font-medium focus:outline-none">
+              <option value="Bank / NEFT">Bank / NEFT</option>
+              <option value="UPI / QR">UPI / QR Code</option>
+              <option value="Cheque">Cheque</option>
+              <option value="Cash">Cash Deposit</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">Bank UTR / Cheque / Ref No <span class="text-red-600">*</span></label>
+          <input type="text" id="modal-ref-input" required placeholder="e.g. UTR-982144 or CHQ-00412" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md font-mono uppercase focus:outline-none">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-200">
+          <button type="button" onclick="closeRecordPaymentModal()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md border border-slate-300">Cancel</button>
+          <button type="submit" class="btn-erp btn-erp-primary text-sm">Save & Issue Receipt</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/layout.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("modal-date-input").value = AppState.getTodayDate();
+      populateTraderModalSelect();
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("filter")) {
+        document.getElementById("pay-filter-status").value = params.get("filter");
+      }
+
+      renderPaymentsTable();
+    });
+
+    function populateTraderModalSelect() {
+      const select = document.getElementById("modal-trader-select");
+      select.innerHTML = AppState.getTraders().map(t => `
+        <option value="${t.id}">${t.firmName} (${t.id})</option>
+      `).join("");
+    }
+
+    function renderPaymentsTable() {
+      const monthFilter = document.getElementById("pay-filter-month").value;
+      const statusFilter = document.getElementById("pay-filter-status").value;
+      const query = (document.getElementById("pay-search").value || "").toLowerCase().trim();
+
+      const traders = AppState.getTraders();
+      const allBills = AppState.getBills();
+      const allPayments = AppState.getPayments();
+
+      let grandInvoiced = 0;
+      let grandCollected = 0;
+
+      let rows = traders.map(t => {
+        let tBills = allBills.filter(b => b.traderId === t.id);
+        let tPayments = allPayments.filter(p => p.traderId === t.id);
+
+        if (monthFilter !== "all") {
+          tBills = tBills.filter(b => b.month === monthFilter);
+          tPayments = tPayments.filter(p => p.month === monthFilter);
+        }
+
+        const bags = tBills.reduce((acc, b) => acc + (b.finalBags || b.traderBags || b.agentBags || 0), 0);
+        const fee = bags * 2.0;
+        const paid = tPayments.reduce((acc, p) => acc + p.amountPaid, 0);
+        const outstanding = Math.max(0, fee - paid);
+
+        grandInvoiced += fee;
+        grandCollected += paid;
+
+        let status = "Unpaid";
+        if (paid >= fee && fee > 0) status = "Paid";
+        else if (paid > 0 && paid < fee) status = "Partially Paid";
+        else if (fee === 0) status = "No Dues";
+
+        return {
+          trader: t,
+          month: monthFilter === "all" ? "All" : monthFilter,
+          bags,
+          fee,
+          paid,
+          outstanding,
+          status,
+          paymentsCount: tPayments.length
+        };
+      });
+
+      const grandOutstanding = Math.max(0, grandInvoiced - grandCollected);
+      document.getElementById("stat-total-invoiced").textContent = AppState.formatCurrency(grandInvoiced);
+      document.getElementById("stat-total-collected").textContent = AppState.formatCurrency(grandCollected);
+      document.getElementById("stat-total-outstanding").textContent = AppState.formatCurrency(grandOutstanding);
+      document.getElementById("stat-total-receipts").textContent = `${allPayments.length} Vouchers`;
+
+      if (statusFilter === "unpaid") {
+        rows = rows.filter(r => r.outstanding > 0);
+      } else if (statusFilter === "paid") {
+        rows = rows.filter(r => r.outstanding === 0 && r.paid > 0);
+      }
+
+      if (query) {
+        rows = rows.filter(r => 
+          r.trader.firmName.toLowerCase().includes(query) ||
+          r.trader.id.toLowerCase().includes(query)
+        );
+      }
+
+      const tbody = document.getElementById("payments-tbody");
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-500 font-sans">No matching records.</td></tr>`;
+        renderStandardPagination("payments-foot", { totalItems: 0 });
+      } else {
+        tbody.innerHTML = rows.map(r => `
+          <tr>
+            <td class="text-left font-sans">
+              <a href="./trader-detail.html?id=${r.trader.id}" class="font-bold text-slate-900 hover:text-blue-700 hover:underline">${r.trader.firmName}</a>
+              <span class="block text-xs text-slate-500 font-mono">${r.trader.id}</span>
+            </td>
+            <td class="text-left font-sans text-slate-700">${r.month === "2026-10" ? "Oct 2026" : (r.month === "2026-09" ? "Sep 2026" : "Cumulative")}</td>
+            <td class="text-right font-semibold text-slate-900 tabular-nums">${AppState.formatNumber(r.bags)}</td>
+            <td class="text-right font-medium text-slate-900 tabular-nums">${AppState.formatCurrency(r.fee)}</td>
+            <td class="text-right font-medium text-emerald-700 tabular-nums">${AppState.formatCurrency(r.paid)}</td>
+            <td class="text-right font-bold ${r.outstanding > 0 ? 'text-amber-700' : 'text-slate-600'} tabular-nums">${AppState.formatCurrency(r.outstanding)}</td>
+            <td class="text-center font-sans">
+              <span class="status-badge ${getPaymentBadge(r.status)}">${r.status}</span>
+            </td>
+            <td class="text-right font-sans whitespace-nowrap">
+              ${r.outstanding > 0 ? `
+                <button onclick="quickOpenPayModal('${r.trader.id}', '${r.month}', ${r.outstanding})" class="btn-erp btn-erp-primary py-1 px-3 text-xs">
+                  Pay Due
+                </button>
+              ` : `
+                <a href="./trader-detail.html?id=${r.trader.id}" class="text-xs font-semibold text-blue-700 hover:underline">Ledger &rarr;</a>
+              `}
+            </td>
+          </tr>
+        `).join("");
+        renderStandardPagination("payments-foot", { totalItems: rows.length, pageSize: 10 });
+      }
+
+      // Render recent receipts
+      const recentTbody = document.getElementById("recent-receipts-tbody");
+      const recents = [...allPayments].reverse().slice(0, 6);
+
+      if (recents.length === 0) {
+        recentTbody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-slate-500">No payment vouchers issued yet.</td></tr>`;
+        renderStandardPagination("recent-receipts-foot", { totalItems: 0 });
+      } else {
+        recentTbody.innerHTML = recents.map(p => `
+          <tr>
+            <td class="text-left font-mono font-bold text-slate-900">${p.receiptNo}</td>
+            <td class="text-left text-slate-600 tabular-nums">${AppState.formatDate(p.date)}</td>
+            <td class="text-left font-medium text-slate-900">${p.traderName}</td>
+            <td class="text-left text-slate-700 font-medium">${p.mode}</td>
+            <td class="text-left font-mono text-slate-600">${p.refNo}</td>
+            <td class="text-right font-bold text-emerald-700 tabular-nums">${AppState.formatCurrency(p.amountPaid)}</td>
+            <td class="text-center">
+              <span class="status-badge badge-matched">Delivered</span>
+            </td>
+            <td class="text-right">
+              <span class="status-badge badge-matched">Completed</span>
+            </td>
+          </tr>
+        `).join("");
+        renderStandardPagination("recent-receipts-foot", { totalItems: recents.length, pageSize: 6 });
+      }
+    }
+
+    function getPaymentBadge(status) {
+      if (status === "Paid") return "badge-paid";
+      if (status === "Partially Paid") return "badge-partial";
+      if (status === "Unpaid") return "badge-pending";
+      return "badge-locked";
+    }
+
+    function quickOpenPayModal(traderId, month, outstanding) {
+      openRecordPaymentModal();
+      document.getElementById("modal-trader-select").value = traderId;
+      if (month !== "All") document.getElementById("modal-month-select").value = month;
+      onTraderSelectChanged();
+      document.getElementById("modal-amount-input").value = outstanding;
+    }
+
+    function openRecordPaymentModal() {
+      document.getElementById("payment-modal").classList.remove("hidden");
+      onTraderSelectChanged();
+    }
+
+    function closeRecordPaymentModal() {
+      document.getElementById("payment-modal").classList.add("hidden");
+    }
+
+    function onTraderSelectChanged() {
+      const traderId = document.getElementById("modal-trader-select").value;
+      const month = document.getElementById("modal-month-select").value;
+
+      const tBills = AppState.getBills().filter(b => b.traderId === traderId && b.month === month);
+      const tPayments = AppState.getPayments().filter(p => p.traderId === traderId && p.month === month);
+
+      const bags = tBills.reduce((acc, b) => acc + (b.finalBags || b.traderBags || b.agentBags || 0), 0);
+      const fee = bags * 2.0;
+      const paid = tPayments.reduce((acc, p) => acc + p.amountPaid, 0);
+      const outstanding = Math.max(0, fee - paid);
+
+      document.getElementById("modal-calc-outstanding").textContent = AppState.formatCurrency(outstanding);
+      if (!document.getElementById("modal-amount-input").value) {
+        document.getElementById("modal-amount-input").value = outstanding > 0 ? outstanding : "";
+      }
+    }
+
+    function handleSavePayment(e) {
+      e.preventDefault();
+      const traderId = document.getElementById("modal-trader-select").value;
+      const month = document.getElementById("modal-month-select").value;
+      const date = document.getElementById("modal-date-input").value;
+      const amount = parseFloat(document.getElementById("modal-amount-input").value);
+      const mode = document.getElementById("modal-mode-select").value;
+      const refNo = document.getElementById("modal-ref-input").value.trim().toUpperCase();
+
+      if (isNaN(amount) || amount <= 0) {
+        showToast("Amount must be a positive number.", "error");
+        return;
+      }
+
+      try {
+        const payment = AppState.recordPayment({
+          traderId,
+          month,
+          amountPaid: amount,
+          mode,
+          refNo,
+          date,
+          receivedBy: "Association Cashier"
+        });
+
+        showActionLoader("Recording payment voucher...", 280, () => {
+          closeRecordPaymentModal();
+          showToast(`Receipt #${payment.receiptNo} created for ${AppState.formatCurrency(amount)}. Sent on WhatsApp.`, "whatsapp");
+          renderPaymentsTable();
+        });
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    }
+  </script>
+</body>
+</html>

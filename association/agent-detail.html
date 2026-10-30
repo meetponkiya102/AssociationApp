@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Account Record - Fee Tracking System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/mock-data.js"></script>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 antialiased font-sans">
+
+  <div id="app-layout">
+    <div class="space-y-6">
+      
+      <!-- Back Navigation & Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+        <div class="flex items-center space-x-3">
+          <a href="./users.html" class="p-2 rounded-md text-slate-500 hover:text-slate-900 border border-slate-300 bg-white">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          </a>
+          <div>
+            <h1 id="agent-firm-name" class="text-2xl font-bold text-slate-900">Commission Agency Record</h1>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent Profile & Summary Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <!-- Profile Particulars -->
+        <div class="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-sm shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2 font-mono">
+            <span class="font-bold text-slate-500 uppercase text-xs">Agency ID</span>
+            <span id="agent-id-pill" class="font-bold text-slate-900">AGT-101</span>
+          </div>
+
+          <div>
+            <span class="text-xs text-slate-500 block">Proprietor / Representative</span>
+            <span id="agent-proprietor" class="font-semibold text-slate-900 mt-0.5 block">--</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500 block">License No</span>
+            <span id="agent-license" class="font-mono text-slate-900 font-bold mt-0.5 block">--</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500 block">Mobile Number</span>
+            <span id="agent-phone" class="font-mono text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500 block">Mandi Yard Shop</span>
+            <span id="agent-address" class="text-slate-700 mt-0.5 block">--</span>
+          </div>
+        </div>
+
+        <!-- Volume & Fee Summary -->
+        <div class="bg-white border border-slate-200 rounded-lg p-5 md:col-span-2 flex flex-col justify-between shadow-sm">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-4">
+              <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Trading Volume & Fee Summary</span>
+              <select id="agent-month-select" onchange="renderAgentView()" class="text-sm border border-slate-300 rounded-md px-3 py-1 font-medium bg-white focus:outline-none">
+                <option value="2026-10" selected>October 2026</option>
+                <option value="2026-09">September 2026</option>
+                <option value="all">All Months</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm">
+              <div class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                <span class="text-xs text-slate-500 uppercase font-bold block">Bills Logged</span>
+                <span id="agent-bills-count" class="text-xl font-bold text-slate-900 font-mono mt-1 block">0</span>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                <span class="text-xs text-slate-500 uppercase font-bold block">Total Bags</span>
+                <span id="agent-total-bags" class="text-xl font-bold text-[#1D4ED8] font-mono mt-1 block">0</span>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                <span class="text-xs text-slate-500 uppercase font-bold block">Fee (₹0.50)</span>
+                <span id="agent-total-fee" class="text-xl font-bold text-slate-900 font-mono mt-1 block">₹0</span>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                <span class="text-xs text-slate-500 uppercase font-bold block">Discrepancies</span>
+                <span id="agent-mismatches-count" class="text-xl font-bold text-red-600 font-mono mt-1 block">0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex justify-between items-center">
+            <span>Agency assessment fee: ₹0.50 / bag on outbound bills</span>
+            <a href="./bills.html" class="text-[#1D4ED8] hover:underline font-semibold">View Master Bills &rarr;</a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Agent Bills Table -->
+      <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div class="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+          <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Outbound Bills Logged by this Agency</span>
+          <span class="text-xs text-slate-500 font-mono">Cross-reconciled against buyer entries</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Bill No</th>
+                <th class="text-left">Date</th>
+                <th class="text-left">Purchasing Trader</th>
+                <th class="text-right">Agent Bags</th>
+                <th class="text-right">Trader Bags</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Source</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="agent-bills-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="agent-bills-foot">
+          <!-- Rendered by renderStandardPagination -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/layout.js"></script>
+  <script>
+    let currentAgent = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const agentId = urlParams.get("id") || "AGT-101";
+      currentAgent = AppState.getAgents().find(a => a.id === agentId) || AppState.getAgents()[0];
+      renderAgentView();
+    });
+
+    function renderAgentView() {
+      if (!currentAgent) return;
+
+      document.getElementById("agent-firm-name").textContent = currentAgent.firmName;
+      document.getElementById("agent-id-pill").textContent = currentAgent.id;
+      document.getElementById("agent-proprietor").textContent = currentAgent.name;
+      document.getElementById("agent-license").textContent = currentAgent.licenseNo;
+      document.getElementById("agent-phone").textContent = `+91 ${currentAgent.mobile}`;
+      document.getElementById("agent-address").textContent = currentAgent.address;
+
+      const badge = document.getElementById("agent-status-badge");
+      if (badge) {
+        badge.textContent = currentAgent.status;
+        badge.className = `status-badge ${currentAgent.status === "Approved" ? "badge-approved" : (currentAgent.status === "Pending" ? "badge-pending" : "badge-locked")}`;
+      }
+
+      const month = document.getElementById("agent-month-select").value;
+      const allBills = AppState.getBills().filter(b => b.agentId === currentAgent.id);
+      const filteredBills = month === "all" ? allBills : allBills.filter(b => b.month === month);
+
+      const bags = filteredBills.reduce((acc, b) => acc + (b.agentBags || 0), 0);
+      const mismatches = filteredBills.filter(b => b.status === "Mismatch").length;
+      const fee = bags * 0.50;
+
+      document.getElementById("agent-bills-count").textContent = filteredBills.length;
+      document.getElementById("agent-total-bags").textContent = AppState.formatNumber(bags);
+      document.getElementById("agent-total-fee").textContent = AppState.formatCurrency(fee);
+      document.getElementById("agent-mismatches-count").textContent = mismatches;
+
+      const tbody = document.getElementById("agent-bills-tbody");
+      if (filteredBills.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500">No outbound bills found.</td></tr>`;
+        renderStandardPagination("agent-bills-foot", { totalItems: 0 });
+        return;
+      }
+
+      tbody.innerHTML = filteredBills.map(b => {
+        const isMismatch = b.status === "Mismatch";
+        return `
+          <tr class="${isMismatch ? 'row-mismatch' : ''}">
+            <td class="text-left font-mono font-bold text-slate-900">${b.billNo}</td>
+            <td class="text-left text-slate-600 tabular-nums">${AppState.formatDate(b.date)}</td>
+            <td class="text-left font-medium text-slate-900">${b.traderName}</td>
+            <td class="text-right font-bold text-slate-900 tabular-nums">${b.agentBags ?? '-'}</td>
+            <td class="text-right font-semibold text-slate-700 tabular-nums">${b.traderBags ?? '-'}</td>
+            <td class="text-center">
+              <span class="status-badge ${getBillBadge(b.status)}">${b.status}</span>
+            </td>
+            <td class="text-center font-mono text-xs text-slate-500">${b.source}</td>
+            <td class="text-right">
+              <a href="./bills.html?search=${b.billNo}" class="text-xs font-semibold text-blue-700 hover:underline">View Bill &rarr;</a>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderStandardPagination("agent-bills-foot", { totalItems: filteredBills.length, pageSize: 10 });
+    }
+
+    function getBillBadge(status) {
+      if (status === "Matched") return "badge-matched";
+      if (status === "Mismatch") return "badge-mismatch";
+      if (status === "Pending") return "badge-pending";
+      if (status === "Resolved") return "badge-resolved";
+      return "badge-locked";
+    }
+  </script>
+</body>
+</html>

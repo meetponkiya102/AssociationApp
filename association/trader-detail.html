@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trader Account & Ledger - Fee Tracking System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/mock-data.js"></script>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 antialiased font-sans">
+
+  <div id="app-layout">
+    <div class="space-y-6">
+      
+      <!-- Back Navigation & Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200">
+        <div class="flex items-center space-x-3">
+          <a href="./users.html" class="p-2 rounded-md text-slate-500 hover:text-slate-900 border border-slate-300 bg-white">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          </a>
+          <div>
+            <h1 id="trader-firm-name" class="text-2xl font-bold text-slate-900">Trader Ledger Statement</h1>
+          </div>
+        </div>
+
+        <button onclick="openRecordPaymentForTrader()" class="btn-erp btn-erp-primary text-sm shadow-sm self-start sm:self-auto">
+          Record Payment Voucher
+        </button>
+      </div>
+
+      <!-- Trader Profile & Metrics Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <!-- Profile Particulars -->
+        <div class="bg-white border border-slate-200 rounded-lg p-5 space-y-3 text-sm shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2 font-mono">
+            <span class="font-bold text-slate-500 uppercase text-xs">Trader ID</span>
+            <span id="trader-id-pill" class="font-bold text-slate-900">TRD-201</span>
+          </div>
+
+          <div>
+            <span class="text-xs text-slate-500 block">Authorized Person / Director</span>
+            <span id="trader-director" class="font-semibold text-slate-900 mt-0.5 block">--</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500 block">GSTIN Number</span>
+            <span id="trader-gst" class="font-mono text-slate-900 font-bold mt-0.5 block">--</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500 block">Mobile Number</span>
+            <span id="trader-phone" class="font-mono text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500 block">Registered Address</span>
+            <span id="trader-address" class="text-slate-700 mt-0.5 block">--</span>
+          </div>
+        </div>
+
+        <!-- Ledger Financial Balances -->
+        <div class="bg-white border border-slate-200 rounded-lg p-5 md:col-span-2 flex flex-col justify-between shadow-sm">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-4">
+              <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Account Financial Standing</span>
+              <span class="text-xs text-slate-500 font-mono">Cess Rate: ₹2.00 / bag</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm">
+              <div class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                <span class="text-xs text-slate-500 uppercase font-bold block">Inbound Bags</span>
+                <span id="trd-total-bags" class="text-xl font-bold text-slate-900 font-mono mt-1 block tabular-nums">0</span>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                <span class="text-xs text-slate-500 uppercase font-bold block">Total Cess (Debit)</span>
+                <span id="trd-total-fee" class="text-xl font-bold text-slate-900 font-mono mt-1 block tabular-nums">₹0</span>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                <span class="text-xs text-slate-500 uppercase font-bold block">Paid (Credit)</span>
+                <span id="trd-total-paid" class="text-xl font-bold text-emerald-700 font-mono mt-1 block tabular-nums">₹0</span>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-md border border-slate-200 border-l-4 border-l-amber-600">
+                <span class="text-xs text-slate-500 uppercase font-bold block">Balance Due</span>
+                <span id="trd-balance-due" class="text-xl font-black text-amber-700 font-mono mt-1 block tabular-nums">₹0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex justify-between items-center">
+            <span>Automated receipt vouchers sent on WhatsApp</span>
+            <a href="./payments.html" class="text-[#1D4ED8] hover:underline font-semibold">Payments Register &rarr;</a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Trader Continuous Ledger Table -->
+      <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div class="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Continuous Account Ledger Statement</span>
+            <span class="status-badge badge-locked">Debit = Fee, Credit = Payment</span>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Date</th>
+                <th class="text-left">Ref / Voucher</th>
+                <th class="text-left">Transaction Description</th>
+                <th class="text-right">Debit (Fee ₹)</th>
+                <th class="text-right">Credit (Paid ₹)</th>
+                <th class="text-right font-bold">Running Balance</th>
+                <th class="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="trader-ledger-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div id="trader-ledger-foot"></div>
+      </div>
+
+      <!-- Inbound Bills for this Trader -->
+      <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div class="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+          <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Inbound Purchase Bills for this Trader</span>
+          <span class="text-xs text-slate-500 font-mono">Cross-reconciled with agent records</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Bill No</th>
+                <th class="text-left">Date</th>
+                <th class="text-left">Commission Agent</th>
+                <th class="text-right">Agent Count</th>
+                <th class="text-right">Trader Count</th>
+                <th class="text-center">Status</th>
+                <th class="text-right">Fee (₹)</th>
+              </tr>
+            </thead>
+            <tbody id="trader-bills-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div id="trader-bills-foot"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/layout.js"></script>
+  <script>
+    let currentTrader = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const traderId = urlParams.get("id") || "TRD-201";
+      currentTrader = AppState.getTraders().find(t => t.id === traderId) || AppState.getTraders()[0];
+      renderTraderView();
+    });
+
+    function renderTraderView() {
+      if (!currentTrader) return;
+
+      document.getElementById("trader-firm-name").textContent = currentTrader.firmName;
+      document.getElementById("trader-id-pill").textContent = currentTrader.id;
+      document.getElementById("trader-director").textContent = currentTrader.name;
+      document.getElementById("trader-gst").textContent = currentTrader.gstNo || "-";
+      document.getElementById("trader-phone").textContent = `+91 ${currentTrader.mobile}`;
+      document.getElementById("trader-address").textContent = currentTrader.address;
+
+      const badge = document.getElementById("trader-status-badge");
+      if (badge) {
+        badge.textContent = currentTrader.status;
+        badge.className = `status-badge ${currentTrader.status === "Approved" ? "badge-approved" : (currentTrader.status === "Pending" ? "badge-pending" : "badge-locked")}`;
+      }
+
+      const allBills = AppState.getBills().filter(b => b.traderId === currentTrader.id);
+      const allPayments = AppState.getPayments().filter(p => p.traderId === currentTrader.id);
+
+      const totalBags = allBills.reduce((acc, b) => acc + (b.finalBags || b.traderBags || b.agentBags || 0), 0);
+      const totalFee = allBills.reduce((acc, b) => acc + ((b.finalBags || b.traderBags || b.agentBags || 0) * (b.ratePerBag || 2.0)), 0);
+      const totalPaid = allPayments.reduce((acc, p) => acc + p.amountPaid, 0);
+      const balanceDue = Math.max(0, totalFee - totalPaid);
+
+      document.getElementById("trd-total-bags").textContent = AppState.formatNumber(totalBags);
+      document.getElementById("trd-total-fee").textContent = AppState.formatCurrency(totalFee);
+      document.getElementById("trd-total-paid").textContent = AppState.formatCurrency(totalPaid);
+      document.getElementById("trd-balance-due").textContent = AppState.formatCurrency(balanceDue);
+
+      // Ledger Timeline
+      const ledgerEvents = [];
+
+      allBills.forEach(b => {
+        const count = b.finalBags || b.traderBags || b.agentBags || 0;
+        const fee = count * (b.ratePerBag || 2.0);
+        ledgerEvents.push({
+          date: b.date,
+          ref: b.billNo,
+          particulars: `Purchase Bill Cess (${count} bags @ ₹${(b.ratePerBag || 2).toFixed(2)}) - ${b.agentName}`,
+          debit: fee,
+          credit: 0,
+          receiptNo: null
+        });
+      });
+
+      allPayments.forEach(p => {
+        ledgerEvents.push({
+          date: p.date,
+          ref: p.receiptNo,
+          particulars: `Cess Payment [${p.mode}] Ref: ${p.refNo}`,
+          debit: 0,
+          credit: p.amountPaid,
+          receiptNo: p.receiptNo
+        });
+      });
+
+      ledgerEvents.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+      let running = 0;
+      const lBody = document.getElementById("trader-ledger-tbody");
+
+      lBody.innerHTML = ledgerEvents.map(item => {
+        running += item.debit - item.credit;
+        return `
+          <tr>
+            <td class="text-left text-slate-600 tabular-nums">${AppState.formatDate(item.date)}</td>
+            <td class="text-left font-mono font-bold text-slate-800">${item.ref}</td>
+            <td class="text-left text-slate-700 text-xs">${item.particulars}</td>
+            <td class="text-right text-slate-900 tabular-nums font-medium">${item.debit > 0 ? AppState.formatCurrency(item.debit) : '<span class="text-slate-400">--</span>'}</td>
+            <td class="text-right text-emerald-700 tabular-nums font-semibold">${item.credit > 0 ? AppState.formatCurrency(item.credit) : '<span class="text-slate-400">--</span>'}</td>
+            <td class="text-right font-bold tabular-nums ${running > 0 ? 'text-amber-700' : 'text-slate-700'}">${AppState.formatCurrency(running)}</td>
+            <td class="text-center">
+              ${item.receiptNo ? `<span class="status-badge badge-matched">Settled</span>` : '<span class="text-slate-400">--</span>'}
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderStandardPagination("trader-ledger-foot", { totalItems: ledgerEvents.length, pageSize: 10 });
+
+      // Inbound bills
+      const bBody = document.getElementById("trader-bills-tbody");
+      if (allBills.length === 0) {
+        bBody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500">No bills found for this trader.</td></tr>`;
+        renderStandardPagination("trader-bills-foot", { totalItems: 0 });
+      } else {
+        bBody.innerHTML = allBills.map(b => {
+          const isMismatch = b.status === "Mismatch";
+          const count = b.finalBags || b.traderBags || b.agentBags || 0;
+          return `
+            <tr class="${isMismatch ? 'row-mismatch' : ''}">
+              <td class="text-left font-mono font-bold text-slate-900">${b.billNo}</td>
+              <td class="text-left text-slate-600 tabular-nums">${AppState.formatDate(b.date)}</td>
+              <td class="text-left font-medium text-slate-900">${b.agentName}</td>
+              <td class="text-right tabular-nums text-slate-600">${b.agentBags ?? '-'}</td>
+              <td class="text-right tabular-nums font-semibold text-slate-900">${b.traderBags ?? '-'}</td>
+              <td class="text-center">
+                <span class="status-badge ${getBillBadge(b.status)}">${b.status}</span>
+              </td>
+              <td class="text-right tabular-nums font-bold text-slate-900">${AppState.formatCurrency(count * 2.0)}</td>
+            </tr>
+          `;
+        }).join("");
+        renderStandardPagination("trader-bills-foot", { totalItems: allBills.length, pageSize: 10 });
+      }
+    }
+
+    function getBillBadge(status) {
+      if (status === "Matched") return "badge-matched";
+      if (status === "Mismatch") return "badge-mismatch";
+      if (status === "Pending") return "badge-pending";
+      if (status === "Resolved") return "badge-resolved";
+      return "badge-locked";
+    }
+
+    function openRecordPaymentForTrader() {
+      if (!currentTrader) return;
+      window.location.href = `./payments.html?filter=unpaid`;
+    }
+  </script>
+</body>
+</html>

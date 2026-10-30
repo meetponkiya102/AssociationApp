@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fee Ledger & Receipts - Market Association Fee Tracking</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/mock-data.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased font-sans">
+
+  <div id="app-layout">
+    <div class="space-y-6">
+      
+      <!-- Top Title & Overview -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Account Ledger & Receipts</h1>
+        </div>
+      </div>
+
+      <!-- Financial Standing Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white border border-slate-200 rounded-md p-4 border-l-4 border-l-amber-500">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Outstanding Balance</div>
+          <div class="text-2xl font-bold text-slate-900 tabular-nums mt-1.5" id="trd-stat-balance">₹0.00</div>
+          <div class="text-xs text-slate-500 mt-1">Payable to Association</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-md p-4">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Invoiced Bags Volume</div>
+          <div class="text-2xl font-bold text-slate-900 tabular-nums mt-1.5" id="trd-stat-bags">0</div>
+          <div class="text-xs text-slate-500 mt-1">Reconciled trade volume</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-md p-4">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Fee Debited</div>
+          <div class="text-2xl font-bold text-slate-900 tabular-nums mt-1.5" id="trd-stat-fee">₹0.00</div>
+          <div class="text-xs text-slate-500 mt-1">Rate: ₹2.00 / bag</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-md p-4">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Paid (Credited)</div>
+          <div class="text-2xl font-bold text-emerald-700 tabular-nums mt-1.5" id="trd-stat-paid">₹0.00</div>
+          <div class="text-xs text-slate-500 mt-1">Settled payments</div>
+        </div>
+      </div>
+
+      <!-- Official Receipts Section -->
+      <div class="bg-white border border-slate-200 rounded-md overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/75">
+          <div>
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Payment Receipt Vouchers</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Receipts acknowledged by Association Office</p>
+          </div>
+          <span class="text-xs text-slate-500">Sent on WhatsApp</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Receipt No</th>
+                <th class="text-left">Payment Date</th>
+                <th class="text-left">Mode</th>
+                <th class="text-left">Reference No</th>
+                <th class="text-right">Amount Paid</th>
+                <th class="text-right">Balance After Payment</th>
+                <th class="text-center">Status</th>
+                <th class="text-right">WhatsApp Delivery</th>
+              </tr>
+            </thead>
+            <tbody id="trader-receipts-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div id="trader-receipts-foot"></div>
+      </div>
+
+      <!-- Running Account Ledger Table -->
+      <div class="bg-white border border-slate-200 rounded-md overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/75">
+          <div>
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Account Ledger Statement</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Debit = Fee assessment on arrivals &bull; Credit = Payments recorded</p>
+          </div>
+          <span class="status-badge badge-locked text-xs">Official Record</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Date</th>
+                <th class="text-left">Voucher / Bill No</th>
+                <th class="text-left">Transaction Description</th>
+                <th class="text-right">Debit (Fee ₹)</th>
+                <th class="text-right">Credit (Paid ₹)</th>
+                <th class="text-right font-bold">Running Balance (₹)</th>
+                <th class="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="trader-ledger-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div id="trader-ledger-foot"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/layout.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      renderTraderLedgerView();
+    });
+
+    function renderTraderLedgerView() {
+      const user = AppState.getCurrentUser();
+      const traderId = (user && user.id && user.id.startsWith("TRD")) ? user.id : "TRD-201";
+
+      const bills = AppState.getBills().filter(b => b.traderId === traderId);
+      const payments = AppState.getPayments().filter(p => p.traderId === traderId);
+
+      const totalBags = bills.reduce((acc, b) => acc + (b.finalBags || b.traderBags || b.agentBags || 0), 0);
+      const totalFee = bills.reduce((acc, b) => acc + ((b.finalBags || b.traderBags || b.agentBags || 0) * (b.ratePerBag || 2.0)), 0);
+      const totalPaid = payments.reduce((acc, p) => acc + p.amountPaid, 0);
+      const balanceDue = Math.max(0, totalFee - totalPaid);
+
+      document.getElementById("trd-stat-bags").textContent = AppState.formatNumber(totalBags);
+      document.getElementById("trd-stat-fee").textContent = AppState.formatCurrency(totalFee);
+      document.getElementById("trd-stat-paid").textContent = AppState.formatCurrency(totalPaid);
+      document.getElementById("trd-stat-balance").textContent = AppState.formatCurrency(balanceDue);
+
+      // Receipts table
+      const rBody = document.getElementById("trader-receipts-tbody");
+      if (payments.length === 0) {
+        rBody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-500">No payment receipts issued yet.</td></tr>`;
+        renderStandardPagination("trader-receipts-foot", { totalItems: 0 });
+      } else {
+        rBody.innerHTML = payments.map(p => `
+          <tr>
+            <td class="text-left font-mono font-bold text-slate-900">${p.receiptNo}</td>
+            <td class="text-left text-slate-600 tabular-nums">${AppState.formatDate(p.date)}</td>
+            <td class="text-left font-medium text-slate-800">${p.mode}</td>
+            <td class="text-left font-mono text-slate-600">${p.refNo}</td>
+            <td class="text-right font-mono font-bold text-emerald-700 tabular-nums">${AppState.formatCurrency(p.amountPaid)}</td>
+            <td class="text-right font-mono text-slate-700 tabular-nums">${AppState.formatCurrency(p.balance)}</td>
+            <td class="text-center">
+              <span class="status-badge ${p.balance === 0 ? 'badge-paid' : 'badge-pending'}">${p.status}</span>
+            </td>
+            <td class="text-right">
+              <span class="status-badge badge-matched">Delivered</span>
+            </td>
+          </tr>
+        `).join("");
+        renderStandardPagination("trader-receipts-foot", { totalItems: payments.length, pageSize: 6 });
+      }
+
+      // Ledger Timeline
+      const ledgerEvents = [];
+
+      bills.forEach(b => {
+        const count = b.finalBags || b.traderBags || b.agentBags || 0;
+        const fee = count * (b.ratePerBag || 2.0);
+        ledgerEvents.push({
+          date: b.date,
+          ref: b.billNo,
+          particulars: `Purchase Bill Fee (${count} bags @ ₹${(b.ratePerBag || 2).toFixed(2)}) - ${b.agentName}`,
+          debit: fee,
+          credit: 0,
+          receiptNo: null
+        });
+      });
+
+      payments.forEach(p => {
+        ledgerEvents.push({
+          date: p.date,
+          ref: p.receiptNo,
+          particulars: `Fee Payment Acknowledgment [${p.mode}] Ref: ${p.refNo}`,
+          debit: 0,
+          credit: p.amountPaid,
+          receiptNo: p.receiptNo
+        });
+      });
+
+      ledgerEvents.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+      let running = 0;
+      const lBody = document.getElementById("trader-ledger-tbody");
+
+      lBody.innerHTML = ledgerEvents.map(item => {
+        running += item.debit - item.credit;
+        return `
+          <tr>
+            <td class="text-left text-slate-600 tabular-nums">${AppState.formatDate(item.date)}</td>
+            <td class="text-left font-mono font-bold text-slate-800">${item.ref}</td>
+            <td class="text-left text-slate-700 text-sm">${item.particulars}</td>
+            <td class="text-right text-slate-900 tabular-nums font-medium">${item.debit > 0 ? AppState.formatCurrency(item.debit) : '<span class="text-slate-400">--</span>'}</td>
+            <td class="text-right text-emerald-700 tabular-nums font-semibold">${item.credit > 0 ? AppState.formatCurrency(item.credit) : '<span class="text-slate-400">--</span>'}</td>
+            <td class="text-right font-bold tabular-nums ${running > 0 ? 'text-amber-700' : 'text-slate-700'}">${AppState.formatCurrency(running)}</td>
+            <td class="text-center">
+              ${item.receiptNo ? `<span class="status-badge badge-matched">Paid</span>` : '<span class="text-slate-400">--</span>'}
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderStandardPagination("trader-ledger-foot", { totalItems: ledgerEvents.length, pageSize: 10 });
+    }
+  </script>
+</body>
+</html>

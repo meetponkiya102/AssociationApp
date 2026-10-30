@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monthly Fee Processing - Fee Tracking System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/mock-data.js"></script>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 antialiased font-sans">
+
+  <div id="app-layout">
+    <div class="space-y-6">
+      
+      <!-- Top Title Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Monthly Fee Processing & Period Lock</h1>
+        </div>
+
+        <button id="lock-month-btn" onclick="openLockConfirmationModal()" class="btn-erp btn-erp-primary text-sm shadow-sm self-start sm:self-auto">
+          Generate Fees & Lock Month
+        </button>
+      </div>
+
+      <!-- Month Selector Bar -->
+      <div class="bg-white border border-slate-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
+        <div class="flex items-center space-x-3 text-sm">
+          <label for="proc-month-select" class="font-bold text-slate-700">Billing Period:</label>
+          <select id="proc-month-select" onchange="renderProcessingView()" class="px-3 py-1.5 border border-slate-300 rounded-md font-semibold bg-white text-slate-900 focus:outline-none">
+            <option value="2026-10" selected>October 2026 (Active Billing)</option>
+            <option value="2026-09">September 2026 (Locked & Processed)</option>
+          </select>
+        </div>
+
+        <div class="text-xs text-slate-500">
+          Official month locking is enabled after the 5th of the subsequent month.
+        </div>
+      </div>
+
+      <!-- Warning Banner: Unresolved Mismatches / Pending Bills -->
+      <div id="mismatch-warning-banner" class="bg-red-50 border-l-4 border-l-red-600 border border-red-200 rounded-md p-4 text-sm text-slate-800 hidden">
+        <div class="flex items-start justify-between">
+          <div>
+            <strong class="font-bold text-red-700">Notice: Discrepancies Excluded from Billing Cycle</strong>
+            <p class="mt-1 text-slate-600 leading-snug">
+              There are <strong id="unresolved-count" class="font-mono text-red-700">0</strong> open mismatches and <strong id="pending-count" class="font-mono text-slate-900">0</strong> unverified bills in this period. 
+              Unresolved bills are excluded from this fee cycle.
+            </p>
+            <div id="unresolved-list-pills" class="flex flex-wrap gap-1.5 mt-2 font-mono text-xs">
+              <!-- Pill tags of bills -->
+            </div>
+          </div>
+          <a href="./bills.html?status=Mismatch" class="text-xs text-red-700 font-bold hover:underline whitespace-nowrap ml-4">Review Bills &rarr;</a>
+        </div>
+      </div>
+
+      <!-- Preview Summary Strip -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+        <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+          <span class="text-xs text-slate-500 uppercase font-bold block">Reconciled Bills</span>
+          <span id="proc-matched-bills" class="text-xl font-bold text-slate-900 font-mono mt-1 block tabular-nums">0</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+          <span class="text-xs text-slate-500 uppercase font-bold block">Reconciled Bags</span>
+          <span id="proc-reconciled-bags" class="text-xl font-bold text-[#1D4ED8] font-mono mt-1 block tabular-nums">0</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+          <span class="text-xs text-slate-500 uppercase font-bold block">Rate Per Bag</span>
+          <span id="proc-rate-applied" class="text-xl font-bold text-slate-800 font-mono mt-1 block tabular-nums">₹2.00</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+          <span class="text-xs text-slate-500 uppercase font-bold block">Calculated Cess Total</span>
+          <span id="proc-total-fee" class="text-xl font-bold text-slate-900 font-mono mt-1 block tabular-nums">₹0.00</span>
+        </div>
+      </div>
+
+      <!-- Per-Trader Fee Preview Table -->
+      <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div class="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+          <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Per-Trader Fee Generation Preview</span>
+          <span class="text-xs text-slate-500 font-mono">Bags &times; ₹2.00 = Mandi Cess</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Trader Firm Name</th>
+                <th class="text-center">Bills</th>
+                <th class="text-right">Reconciled Bags</th>
+                <th class="text-right">Effective Rate</th>
+                <th class="text-right">Calculated Fee (Debit)</th>
+                <th class="text-center">Disputed Bags Excluded</th>
+                <th class="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="proc-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="proc-foot">
+          <!-- Rendered by renderStandardPagination -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Lock Confirmation Modal -->
+  <div id="lock-modal" class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-lg max-w-md w-full p-5 shadow-xl">
+      <div class="pb-3 border-b border-slate-200">
+        <h3 class="text-base font-bold text-slate-900">Confirm Month Lock & Fee Generation</h3>
+      </div>
+      <div class="py-4 text-sm text-slate-600 space-y-2 leading-relaxed">
+        <p>You are about to finalize and lock billing for <strong id="modal-lock-month-text" class="text-slate-900">October 2026</strong>.</p>
+        <ul class="list-disc pl-5 space-y-1 text-slate-700 text-xs sm:text-sm">
+          <li>All verified bills will be marked as <strong>Locked</strong>.</li>
+          <li>Commission Agents and Traders can no longer edit bag counts.</li>
+          <li>Cess debits will be posted to the Trader Account Ledgers.</li>
+        </ul>
+      </div>
+      <div class="flex justify-end space-x-2 pt-3 border-t border-slate-200">
+        <button onclick="closeLockModal()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md border border-slate-300">Cancel</button>
+        <button onclick="executeLockMonth()" class="btn-erp btn-erp-primary text-sm">Confirm & Lock Month</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/layout.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      renderProcessingView();
+    });
+
+    function renderProcessingView() {
+      const selectedMonth = document.getElementById("proc-month-select").value;
+      const lockedMonths = AppState.getLockedMonths();
+      const isLocked = lockedMonths.includes(selectedMonth);
+
+      const statusBadge = document.getElementById("month-lock-status-badge");
+      const lockBtn = document.getElementById("lock-month-btn");
+
+      if (isLocked) {
+        if (statusBadge) {
+          statusBadge.textContent = "Locked & Finalized";
+          statusBadge.className = "status-badge badge-locked";
+        }
+        lockBtn.disabled = true;
+        lockBtn.className = "btn-erp bg-slate-200 text-slate-400 border-slate-200 cursor-not-allowed text-sm";
+        lockBtn.textContent = "Period Finalized";
+      } else {
+        if (statusBadge) {
+          statusBadge.textContent = "Open for Reconciliation";
+          statusBadge.className = "status-badge badge-pending";
+        }
+        lockBtn.disabled = false;
+        lockBtn.className = "btn-erp btn-erp-primary text-sm shadow-sm";
+        lockBtn.textContent = "Generate Fees & Lock Month";
+      }
+
+      const allBills = AppState.getBills().filter(b => b.month === selectedMonth);
+      const mismatches = allBills.filter(b => b.status === "Mismatch");
+      const pendingBills = allBills.filter(b => b.status === "Pending");
+      const matchedBills = allBills.filter(b => b.status === "Matched" || b.status === "Resolved" || b.status === "Locked");
+
+      const warnBanner = document.getElementById("mismatch-warning-banner");
+      if (mismatches.length > 0 || pendingBills.length > 0) {
+        warnBanner.classList.remove("hidden");
+        document.getElementById("unresolved-count").textContent = mismatches.length;
+        document.getElementById("pending-count").textContent = pendingBills.length;
+
+        const pills = document.getElementById("unresolved-list-pills");
+        pills.innerHTML = [
+          ...mismatches.map(b => `<span class="px-2 py-0.5 bg-red-100 text-red-800 border border-red-200 rounded">#${b.billNo} (Mismatch)</span>`),
+          ...pendingBills.map(b => `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-200 rounded">#${b.billNo} (Pending)</span>`)
+        ].join("");
+      } else {
+        warnBanner.classList.add("hidden");
+      }
+
+      const rate = 2.0;
+      let totalBags = 0;
+      let totalFee = 0;
+
+      const traders = AppState.getTraders();
+      const tbody = document.getElementById("proc-tbody");
+
+      const rowsData = traders.map(t => {
+        const tBills = allBills.filter(b => b.traderId === t.id);
+        const tMatchedBills = tBills.filter(b => b.status === "Matched" || b.status === "Resolved" || b.status === "Locked");
+        const tDisputedBills = tBills.filter(b => b.status === "Mismatch" || b.status === "Pending");
+
+        const matchedBags = tMatchedBills.reduce((acc, b) => acc + (b.finalBags || b.traderBags || b.agentBags || 0), 0);
+        const disputedBags = tDisputedBills.reduce((acc, b) => acc + (b.traderBags || b.agentBags || 0), 0);
+        const fee = matchedBags * rate;
+
+        totalBags += matchedBags;
+        totalFee += fee;
+
+        return {
+          trader: t,
+          billsCount: tMatchedBills.length,
+          matchedBags,
+          disputedBags,
+          fee
+        };
+      });
+
+      document.getElementById("proc-matched-bills").textContent = matchedBills.length;
+      document.getElementById("proc-reconciled-bags").textContent = AppState.formatNumber(totalBags);
+      document.getElementById("proc-rate-applied").textContent = `₹${rate.toFixed(2)}`;
+      document.getElementById("proc-total-fee").textContent = AppState.formatCurrency(totalFee);
+
+      tbody.innerHTML = rowsData.map(r => `
+        <tr>
+          <td class="text-left">
+            <a href="./trader-detail.html?id=${r.trader.id}" class="font-bold text-slate-900 hover:text-blue-700 hover:underline">${r.trader.firmName}</a>
+            <span class="block text-xs text-slate-500 font-mono">${r.trader.id}</span>
+          </td>
+          <td class="text-center font-mono tabular-nums text-slate-600">${r.billsCount}</td>
+          <td class="text-right font-mono font-semibold text-slate-900 tabular-nums">${AppState.formatNumber(r.matchedBags)}</td>
+          <td class="text-right font-mono text-slate-600 tabular-nums">₹${rate.toFixed(2)}</td>
+          <td class="text-right font-mono font-bold text-slate-900 tabular-nums">${AppState.formatCurrency(r.fee)}</td>
+          <td class="text-center font-mono text-xs ${r.disputedBags > 0 ? 'text-red-600 font-bold' : 'text-slate-400'}">
+            ${r.disputedBags > 0 ? `${AppState.formatNumber(r.disputedBags)} bags` : '--'}
+          </td>
+          <td class="text-center">
+            ${isLocked ? '<span class="status-badge badge-locked">Period Finalized</span>' : (r.disputedBags > 0 ? '<span class="status-badge badge-partial">Exclusions Active</span>' : '<span class="status-badge badge-matched">Ready to Lock</span>')}
+          </td>
+        </tr>
+      `).join("");
+
+      renderStandardPagination("proc-foot", { totalItems: rowsData.length, pageSize: 10 });
+    }
+
+    function openLockConfirmationModal() {
+      const selectedMonth = document.getElementById("proc-month-select").value;
+      document.getElementById("modal-lock-month-text").textContent = selectedMonth === "2026-10" ? "October 2026" : selectedMonth;
+      document.getElementById("lock-modal").classList.remove("hidden");
+    }
+
+    function closeLockModal() {
+      document.getElementById("lock-modal").classList.add("hidden");
+    }
+
+    function executeLockMonth() {
+      const selectedMonth = document.getElementById("proc-month-select").value;
+      showActionLoader("Finalizing monthly accounts...", 350, () => {
+        try {
+          AppState.lockMonth(selectedMonth);
+          closeLockModal();
+          showToast(`Billing period ${selectedMonth} locked. Trader cess debited.`, "success");
+          renderProcessingView();
+        } catch (err) {
+          showToast(err.message, "error");
+        }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Dashboard - Fee Tracking System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/mock-data.js"></script>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 antialiased font-sans">
+
+  <div id="app-layout">
+    <div class="space-y-6">
+      
+      <!-- Top Title & Quick Action -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Commission Agency Portal</h1>
+        </div>
+
+        <div class="flex items-center space-x-2 self-start sm:self-auto">
+          <a href="./add-bill.html" class="btn-erp btn-erp-primary text-sm shadow-sm flex items-center">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add New Bill
+          </a>
+        </div>
+      </div>
+
+      <!-- Action Priority & KPIs -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <!-- Action Required: Mismatches -->
+        <a href="./my-bills.html?filter=Mismatch" class="bg-white border border-slate-200 rounded-lg p-5 border-l-4 border-l-red-600 flex flex-col justify-between hover:bg-red-50/30 group shadow-sm transition-colors">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs uppercase font-bold text-red-600 tracking-wider">Discrepancy Action</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+            </div>
+            <div id="stat-agent-mismatches" class="text-3xl font-extrabold text-red-600 font-mono mt-1 tabular-nums">0</div>
+            <span class="text-xs text-slate-600 mt-1 block">Bills with bag count difference</span>
+          </div>
+          <span class="text-xs text-red-600 font-bold group-hover:underline mt-3">Re-verify bags &rarr;</span>
+        </a>
+
+        <!-- October Traded Volume -->
+        <div class="bg-white border border-slate-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <span class="text-xs text-slate-500 uppercase font-bold tracking-wider block">October Outbound Bags</span>
+            <div id="stat-agent-bags" class="text-3xl font-extrabold text-slate-900 font-mono mt-1 tabular-nums">0</div>
+            <span class="text-xs text-slate-500 mt-1 block">Reconciled trade volume</span>
+          </div>
+          <span class="text-xs text-slate-400 font-mono">Current period</span>
+        </div>
+
+        <!-- Bills Recorded -->
+        <div class="bg-white border border-slate-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <span class="text-xs text-slate-500 uppercase font-bold tracking-wider block">Bills Logged</span>
+            <div id="stat-agent-bills" class="text-3xl font-extrabold text-slate-900 font-mono mt-1 tabular-nums">0</div>
+            <span class="text-xs text-slate-500 mt-1 block">Manual or synced entries</span>
+          </div>
+          <a href="./my-bills.html" class="text-xs text-[#1D4ED8] hover:underline font-semibold mt-3">View all bills</a>
+        </div>
+
+        <!-- Estimated Fee Payable -->
+        <div class="bg-white border border-slate-200 rounded-lg p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <span class="text-xs text-slate-500 uppercase font-bold tracking-wider block">Estimated Fee</span>
+            <div id="stat-agent-fee" class="text-3xl font-extrabold text-slate-900 font-mono mt-1 tabular-nums">₹0.00</div>
+            <span class="text-xs text-slate-500 mt-1 block">Assessed at ₹0.50 / bag</span>
+          </div>
+          <a href="./fees.html" class="text-xs text-[#1D4ED8] hover:underline font-semibold mt-3">View statement &rarr;</a>
+        </div>
+
+      </div>
+
+      <!-- Recent Bills Table -->
+      <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div class="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+          <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Recent Bills Entered & Verification Status</span>
+          <a href="./my-bills.html" class="text-xs text-[#1D4ED8] hover:underline font-semibold">All My Bills &rarr;</a>
+        </div>
+
+        <div class="table-responsive">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Bill No</th>
+                <th class="text-left">Date</th>
+                <th class="text-left">Purchasing Trader</th>
+                <th class="text-right">My Count</th>
+                <th class="text-right">Trader's Count</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Source</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="agent-recent-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div id="agent-recent-foot"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/layout.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      renderAgentDashboard();
+    });
+
+    function renderAgentDashboard() {
+      const user = AppState.getCurrentUser();
+      const agentId = user.id && user.id.startsWith("AGT") ? user.id : "AGT-101";
+      const agent = AppState.getAgents().find(a => a.id === agentId) || AppState.getAgents()[0];
+
+      const badge = document.getElementById("agent-active-badge");
+      if (badge) badge.textContent = `${agent.firmName} (${agent.id})`;
+
+      const bills = AppState.getBills().filter(b => b.agentId === agent.id);
+      const octBills = bills.filter(b => b.month === "2026-10");
+
+      const totalBags = octBills.reduce((acc, b) => acc + (b.agentBags || 0), 0);
+      const mismatches = octBills.filter(b => b.status === "Mismatch").length;
+      const feePayable = totalBags * 0.50;
+
+      document.getElementById("stat-agent-bags").textContent = AppState.formatNumber(totalBags);
+      document.getElementById("stat-agent-bills").textContent = octBills.length;
+      document.getElementById("stat-agent-mismatches").textContent = mismatches;
+      document.getElementById("stat-agent-fee").textContent = AppState.formatCurrency(feePayable);
+
+      const tbody = document.getElementById("agent-recent-tbody");
+      const recent = bills.slice(0, 8);
+
+      if (recent.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500">No bills logged yet. Click 'Add New Bill' above.</td></tr>`;
+        renderStandardPagination("agent-recent-foot", { totalItems: 0 });
+        return;
+      }
+
+      tbody.innerHTML = recent.map(b => {
+        const isMismatch = b.status === "Mismatch";
+        return `
+          <tr class="${isMismatch ? 'row-mismatch' : ''}">
+            <td class="text-left font-mono font-bold text-slate-900">${b.billNo}</td>
+            <td class="text-left text-slate-600 tabular-nums">${AppState.formatDate(b.date)}</td>
+            <td class="text-left font-medium text-slate-900">${b.traderName}</td>
+            <td class="text-right font-bold text-slate-900 tabular-nums">${b.agentBags ?? '-'}</td>
+            <td class="text-right font-semibold text-slate-600 tabular-nums">${b.traderBags ?? '-'}</td>
+            <td class="text-center">
+              <span class="status-badge ${getBillBadge(b.status)}">${b.status}</span>
+            </td>
+            <td class="text-center font-mono text-xs text-slate-500">${b.source}</td>
+            <td class="text-right">
+              ${isMismatch ? `
+                <a href="./my-bills.html?edit=${b.id}" class="btn-erp btn-erp-danger py-1 px-2.5 text-xs">
+                  Fix Count
+                </a>
+              ` : `
+                <a href="./my-bills.html" class="text-xs text-blue-700 hover:underline font-semibold">Details</a>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderStandardPagination("agent-recent-foot", { totalItems: recent.length, pageSize: 8 });
+    }
+
+    function getBillBadge(status) {
+      if (status === "Matched") return "badge-matched";
+      if (status === "Mismatch") return "badge-mismatch";
+      if (status === "Pending") return "badge-pending";
+      if (status === "Resolved") return "badge-resolved";
+      return "badge-locked";
+    }
+  </script>
+</body>
+</html>

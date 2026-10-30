@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trader Dashboard - Market Association Fee Tracking</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/mock-data.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased font-sans">
+
+  <div id="app-layout">
+    <div class="space-y-6">
+      
+      <!-- Top Title & Quick Actions -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Trader Dashboard</h1>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <a href="./add-bill.html" class="btn-erp btn-erp-primary text-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Inbound Bill
+          </a>
+          <a href="./fees-and-receipts.html" class="btn-erp btn-erp-secondary text-sm flex items-center gap-2">
+            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Ledger & Receipts
+          </a>
+        </div>
+      </div>
+
+      <!-- Action Required Alert Strip (if mismatches exist) -->
+      <div id="mismatch-alert-banner" class="hidden bg-rose-50 border border-rose-200 border-l-4 border-l-rose-600 rounded-md p-3.5 text-sm text-rose-900 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <svg class="w-5 h-5 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <div>
+            <span class="font-bold">Count Discrepancies Found:</span>
+            <span id="mismatch-banner-text" class="text-slate-700 ml-1">You have bills where your bag count disagrees with the Commission Agent.</span>
+          </div>
+        </div>
+        <a href="./my-bills.html?filter=Mismatch" class="font-bold text-rose-700 hover:underline whitespace-nowrap text-sm">Resolve Now &rarr;</a>
+      </div>
+
+      <!-- Metric Cards Strip -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        
+        <div class="md:col-span-2 bg-white border border-slate-200 rounded-md p-5 border-l-4 border-l-amber-500">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Fee Outstanding (Current Dues)</span>
+            <span class="status-badge badge-pending text-xs">October 2026</span>
+          </div>
+          <div class="text-3xl font-bold text-slate-900 tabular-nums mt-2" id="stat-trd-fee">₹0.00</div>
+          <div class="text-sm text-slate-500 mt-1.5 flex items-center justify-between">
+            <span>Payable to Association Account</span>
+            <span class="font-medium text-slate-700">Rate: ₹2.00 / bag</span>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-md p-5">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">October Bags</div>
+          <div class="text-2xl font-bold text-slate-900 tabular-nums mt-2" id="stat-trd-bags">0</div>
+          <div class="text-xs text-slate-500 mt-1">Total physical arrivals received</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-md p-5">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Reconciled Bills</div>
+          <div class="text-2xl font-bold text-slate-900 tabular-nums mt-2" id="stat-trd-bills">0</div>
+          <div class="text-xs text-slate-500 mt-1">Across registered agents</div>
+        </div>
+
+      </div>
+
+      <!-- Recent Inbound Bills Table -->
+      <div class="bg-white border border-slate-200 rounded-md overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/75">
+          <div>
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Recent Inbound Bills</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Cross-verified against Commission Agent sales entries</p>
+          </div>
+          <a href="./my-bills.html" class="text-sm font-semibold text-blue-700 hover:underline">View All Bills &rarr;</a>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Bill No</th>
+                <th class="text-left">Date</th>
+                <th class="text-left">Commission Agent Firm</th>
+                <th class="text-right">Agent Bags</th>
+                <th class="text-right">My Verified Bags</th>
+                <th class="text-center">Status</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="trader-recent-tbody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+        <div id="trader-recent-foot"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/layout.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      renderTraderDashboard();
+    });
+
+    function renderTraderDashboard() {
+      const user = AppState.getCurrentUser();
+      const traderId = (user && user.id && user.id.startsWith("TRD")) ? user.id : "TRD-201";
+      const trader = AppState.getTraders().find(t => t.id === traderId) || AppState.getTraders()[0];
+
+      const badge = document.getElementById("trader-active-badge");
+      if (badge) badge.textContent = `${trader.firmName} (${trader.id})`;
+
+      const bills = AppState.getBills().filter(b => b.traderId === trader.id);
+      const octBills = bills.filter(b => b.month === "2026-10");
+
+      const totalBags = octBills.reduce((acc, b) => acc + (b.finalBags || b.traderBags || b.agentBags || 0), 0);
+      const mismatches = octBills.filter(b => b.status === "Mismatch").length;
+      const calculatedFee = octBills.reduce((acc, b) => acc + ((b.finalBags || b.traderBags || b.agentBags || 0) * (b.ratePerBag || 2.0)), 0);
+
+      const payments = AppState.getPayments().filter(p => p.traderId === trader.id && p.month === "2026-10");
+      const paid = payments.reduce((acc, p) => acc + p.amountPaid, 0);
+      const balanceDue = Math.max(0, calculatedFee - paid);
+
+      document.getElementById("stat-trd-bags").textContent = AppState.formatNumber(totalBags);
+      document.getElementById("stat-trd-bills").textContent = octBills.length;
+      document.getElementById("stat-trd-fee").textContent = AppState.formatCurrency(balanceDue);
+
+      if (mismatches > 0) {
+        const banner = document.getElementById("mismatch-alert-banner");
+        banner.classList.remove("hidden");
+        document.getElementById("mismatch-banner-text").textContent = `You have ${mismatches} bill${mismatches > 1 ? 's' : ''} with bag count discrepancies against commission agents.`;
+      }
+
+      // Recent 8 bills
+      const tbody = document.getElementById("trader-recent-tbody");
+      const recent = bills.slice(0, 8);
+
+      if (recent.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500">No bills recorded yet. Click 'Add Inbound Bill' to enter your first purchase bill.</td></tr>`;
+        renderStandardPagination("trader-recent-foot", { totalItems: 0 });
+        return;
+      }
+
+      tbody.innerHTML = recent.map(b => {
+        const isMismatch = b.status === "Mismatch";
+        return `
+          <tr class="${isMismatch ? 'row-mismatch' : ''}">
+            <td class="text-left font-mono font-bold text-slate-900">${b.billNo}</td>
+            <td class="text-left text-slate-600 tabular-nums">${AppState.formatDate(b.date)}</td>
+            <td class="text-left font-medium text-slate-900">${b.agentName}</td>
+            <td class="text-right tabular-nums text-slate-600">${b.agentBags !== null ? AppState.formatNumber(b.agentBags) : '<span class="text-slate-400">--</span>'}</td>
+            <td class="text-right tabular-nums font-semibold text-slate-900">${b.traderBags !== null ? AppState.formatNumber(b.traderBags) : '<span class="text-slate-400">--</span>'}</td>
+            <td class="text-center">
+              <span class="status-badge ${getBillBadge(b.status)}">${b.status}</span>
+            </td>
+            <td class="text-right">
+              ${isMismatch ? `
+                <a href="./my-bills.html?edit=${b.id}" class="btn-erp btn-erp-danger py-1 px-2.5 text-xs font-semibold">
+                  Fix Count
+                </a>
+              ` : `
+                <a href="./my-bills.html" class="text-sm font-medium text-blue-700 hover:underline">Details</a>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderStandardPagination("trader-recent-foot", { totalItems: recent.length, pageSize: 8 });
+    }
+
+    function getBillBadge(status) {
+      if (status === "Matched") return "badge-matched";
+      if (status === "Mismatch") return "badge-mismatch";
+      if (status === "Pending") return "badge-pending";
+      if (status === "Resolved") return "badge-resolved";
+      return "badge-locked";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agency Cess Statements - Fee Tracking System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="../js/mock-data.js"></script>
+</head>
+<body class="bg-[#F8FAFC] text-slate-800 antialiased font-sans">
+
+  <div id="app-layout">
+    <div class="space-y-6">
+      
+      <!-- Top Title Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Agency Monthly Fee Statements</h1>
+        </div>
+      </div>
+
+      <!-- Current Standing Summary Bar -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Month (Oct 2026) Bags</div>
+          <div class="text-3xl font-extrabold text-slate-900 tabular-nums mt-1" id="agent-fee-bags">0 Bags</div>
+          <div class="text-xs text-slate-500 mt-1">Reconciled trade volume</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Agent Facilitation Rate</div>
+          <div class="text-3xl font-extrabold text-[#1D4ED8] tabular-nums mt-1">₹0.50 <span class="text-sm font-normal text-slate-500">/ bag</span></div>
+          <div class="text-xs text-slate-500 mt-1">Notified fee schedule</div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-5 border-l-4 border-l-[#1D4ED8] shadow-sm">
+          <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Oct 2026 Assessment Estimate</div>
+          <div class="text-3xl font-extrabold text-slate-900 tabular-nums mt-1" id="agent-fee-amount">₹0.00</div>
+          <div class="text-xs text-slate-500 mt-1">Period closes on 31 Oct 2026</div>
+        </div>
+      </div>
+
+      <!-- Monthly Statements History Table -->
+      <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+        <div class="px-4 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+          <div>
+            <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Monthly Assessment Periods</h2>
+          </div>
+          <span class="text-xs text-slate-500">2 statements recorded</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th class="text-left">Billing Month</th>
+                <th class="text-right">Reconciled Bills</th>
+                <th class="text-right">Total Bags</th>
+                <th class="text-right">Rate</th>
+                <th class="text-right">Total Fee (₹)</th>
+                <th class="text-center">Period Status</th>
+                <th class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left font-semibold text-slate-900">October 2026</td>
+                <td id="row-oct-bills" class="text-right tabular-nums">--</td>
+                <td id="row-oct-bags" class="text-right tabular-nums font-semibold text-slate-900">--</td>
+                <td class="text-right tabular-nums">₹0.50</td>
+                <td id="row-oct-fee" class="text-right tabular-nums font-bold text-slate-900">--</td>
+                <td class="text-center"><span class="status-badge badge-pending">Open (In Progress)</span></td>
+                <td class="text-right">
+                  <button onclick="showToast('October billing period is currently in progress.', 'info')" class="text-xs font-semibold text-blue-700 hover:underline">Draft Preview</button>
+                </td>
+              </tr>
+              <tr>
+                <td class="text-left font-semibold text-slate-900">September 2026</td>
+                <td id="row-sep-bills" class="text-right tabular-nums">--</td>
+                <td id="row-sep-bags" class="text-right tabular-nums font-semibold text-slate-900">--</td>
+                <td class="text-right tabular-nums">₹0.40</td>
+                <td id="row-sep-fee" class="text-right tabular-nums font-bold text-slate-900">--</td>
+                <td class="text-center"><span class="status-badge badge-locked">Period Finalized</span></td>
+                <td class="text-right">
+                  <span class="text-xs text-slate-500 font-medium">Billed</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="agent-fees-foot"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/layout.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const user = AppState.getCurrentUser();
+      const agentId = (user && user.id && user.id.startsWith("AGT")) ? user.id : "AGT-101";
+      const bills = AppState.getBills().filter(b => b.agentId === agentId);
+
+      const octBills = bills.filter(b => b.month === "2026-10");
+      const octBags = octBills.reduce((acc, b) => acc + (b.agentBags || 0), 0);
+      const octFee = octBags * 0.50;
+
+      const sepBills = bills.filter(b => b.month === "2026-09");
+      const sepBags = sepBills.reduce((acc, b) => acc + (b.agentBags || 0), 0);
+      const sepFee = sepBags * 0.40;
+
+      document.getElementById("agent-fee-bags").textContent = `${AppState.formatNumber(octBags)} Bags`;
+      document.getElementById("agent-fee-amount").textContent = AppState.formatCurrency(octFee);
+
+      document.getElementById("row-oct-bills").textContent = octBills.length;
+      document.getElementById("row-oct-bags").textContent = AppState.formatNumber(octBags);
+      document.getElementById("row-oct-fee").textContent = AppState.formatCurrency(octFee);
+
+      document.getElementById("row-sep-bills").textContent = sepBills.length;
+      document.getElementById("row-sep-bags").textContent = AppState.formatNumber(sepBags);
+      document.getElementById("row-sep-fee").textContent = AppState.formatCurrency(sepFee);
+
+      renderStandardPagination("agent-fees-foot", { totalItems: 2, pageSize: 10 });
+    });
+  </script>
+</body>
+</html>
